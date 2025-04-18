@@ -19,4 +19,13 @@ public class BookService {
     public BookEntity createBook(BookEntity bookEntity){
         return bookRepository.save(bookEntity);
     }
+
+    public void deleteBookById(Long id){
+        bookRepository.deleteById(id);
+
+    }
+
+//    public BookEntity updateBook(Long id, BookEntity bookEntity){
+//        BookEntity bookEntity1 = bookRepository.findById(id).orElseThrow();
+
 }
