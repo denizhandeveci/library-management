@@ -2,8 +2,11 @@ package com.example.library.management.service;
 
 import com.example.library.management.entity.BookEntity;
 import com.example.library.management.repository.BookRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class BookService {
@@ -15,17 +18,25 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-
     public BookEntity createBook(BookEntity bookEntity){
         return bookRepository.save(bookEntity);
     }
 
-    public void deleteBookById(Long id){
-        bookRepository.deleteById(id);
-
+    public List<BookEntity> createMultipleBooks(List<BookEntity> listOfBooks){
+        return bookRepository.saveAll(listOfBooks);
     }
 
-//    public BookEntity updateBook(Long id, BookEntity bookEntity){
-//        BookEntity bookEntity1 = bookRepository.findById(id).orElseThrow();
+    public void deleteBookById(Long id){
+        bookRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void deleteAllBooksAndResetAutoIncrement() {
+        bookRepository.deleteAll();
+        bookRepository.resetAutoIncrement();
+    }
+
+
+
 
 }

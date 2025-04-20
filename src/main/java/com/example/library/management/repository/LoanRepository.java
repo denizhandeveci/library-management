@@ -6,10 +6,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface LoanRepository extends JpaRepository<LoanEntity,Long> {
 
-    @Query(" SELECT l FROM LoanEntity WHERE l.bookEntity.id = :bookId AND l.userEntity.id = :userId ")
-    LoanEntity  getLoanEntityByBookEntityIdAndUserEntityId (@Param("userId") Long userId, @Param("bookId") Long bookId);
+    Optional<LoanEntity> findByUserEntityIdAndBookEntityIdAndIsReturnedFalse(Long userId, Long bookId);
+    Optional<LoanEntity> findByBookEntityIdAndUserEntityId(Long bookId, Long userId);
+
 
 }

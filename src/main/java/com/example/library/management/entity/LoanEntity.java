@@ -15,6 +15,7 @@ public class LoanEntity {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "book_entity_id")
     private BookEntity bookEntity;
     @ManyToOne
     private UserEntity userEntity;

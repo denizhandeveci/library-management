@@ -16,8 +16,14 @@ public class LoanController {
         this.loanService = loanService;
     }
 
-    @PostMapping("/create-loan/{userId}/{bookId}")
+    @PostMapping("/create-loan-userId-bookId/{userId}/{bookId}")
     public LoanEntity createLoan(@PathVariable Long userId, @PathVariable Long bookId){
         return loanService.createLoan(bookId, userId);
     }
+
+    @PostMapping("/return-book/{userId}/{bookId}")
+    public void returnLoan(@PathVariable Long userId, @PathVariable Long bookId) {
+        loanService.returnLoan(userId, bookId);
+    }
+
 }

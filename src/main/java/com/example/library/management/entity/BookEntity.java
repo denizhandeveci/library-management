@@ -18,21 +18,27 @@ public class BookEntity {
     @Column
     private String title;
     @Column
+    private Integer numOfCopies;
+    @Column
     private String author;
     @Column
     private String isbn;
     @Column
-    private boolean available;
+    private String genre;
+    @Column
+    private Boolean available;
 
-    @OneToMany(mappedBy = "bookEntity")
+    @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LoanEntity> loans;
 
 
-    public BookEntity( String author,boolean available,String isbn,String title) {
+    public BookEntity( String author,Boolean available,String isbn,String title, String genre,Integer numOfCopies) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
+        this.genre = genre;
         this.available = available;
+        this.numOfCopies = numOfCopies;
     }
 
     public BookEntity() {
@@ -71,11 +77,27 @@ public class BookEntity {
         this.isbn = isbn;
     }
 
-    public boolean isAvailable() {
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public Boolean isAvailable() {
         return available;
     }
 
-    public void setAvailable(boolean available) {
+    public void setAvailable(Boolean available) {
         this.available = available;
+    }
+
+    public Integer getNumOfCopies() {
+        return numOfCopies;
+    }
+
+    public void setNumOfCopies(Integer numOfCopies) {
+        this.numOfCopies = numOfCopies;
     }
 }
