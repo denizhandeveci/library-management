@@ -30,6 +30,9 @@ public class BookEntity {
 
     @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LoanEntity> loans;
+    @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReservationEntity> reservations;
+
 
 
     public BookEntity( String author,Boolean available,String isbn,String title, String genre,Integer numOfCopies) {
@@ -99,5 +102,17 @@ public class BookEntity {
 
     public void setNumOfCopies(Integer numOfCopies) {
         this.numOfCopies = numOfCopies;
+    }
+
+    @Override
+    public String toString() {
+        return "BookEntity{" +
+                "title='" + title + '\'' +
+                ", numOfCopies=" + numOfCopies +
+                ", author='" + author + '\'' +
+                ", isbn='" + isbn + '\'' +
+                ", genre='" + genre + '\'' +
+                ", available=" + available +
+                '}';
     }
 }

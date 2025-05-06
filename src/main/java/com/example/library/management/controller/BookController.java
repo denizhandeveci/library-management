@@ -42,6 +42,15 @@ public class BookController {
         return "All the data in library deleted and reset";
     }
 
+    @PostMapping("/search-book-by-title/{title}")
+    public String searchBookByTitle(@PathVariable  String title){
+        return bookService.searchBookByTitle(title);
+    }
+    @GetMapping("/view-book/{id}")
+    public String viewBook(@PathVariable Long id){
+        return bookService.viewBook(id);
+    }
+
 
 
 }
