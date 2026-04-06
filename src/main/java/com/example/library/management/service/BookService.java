@@ -72,13 +72,4 @@ public class BookService {
                 "People who liked this genre also borrowed: " + recommandationsByGenreList +
                 " People who liked this author also borrowed: " + recommadationsByAuthorList;
     }
-
-    
-
-
-
-
-
-
-
 }

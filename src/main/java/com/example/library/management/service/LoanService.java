@@ -69,7 +69,7 @@ public class LoanService {
 
 
     public void returnLoan(Long userId, Long bookId){
-        LoanEntity loanEntity = loanRepository.findByUserEntityIdAndBookEntityIdAndIsReturnedFalse(userId,bookId)
+        LoanEntity loanEntity = loanRepository.findByUserEntityIdAndBookEntityId(userId,bookId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
         if(loanEntity.isReturned()){

@@ -27,7 +27,7 @@ public class LoanEntity {
     @Column(name="return_date")
     private LocalDate returnDate;
     @Column(name="is_returned")
-    private boolean isReturned;
+    private boolean isReturned = false;
 
     public LoanEntity(BookEntity bookEntity, UserEntity userEntity, LocalDate loanDate, LocalDate dueDate, boolean isReturned, LocalDate returnDate) {
         this.bookEntity = bookEntity;
@@ -95,6 +95,6 @@ public class LoanEntity {
     }
 
     public void setReturned(boolean returned) {
-        isReturned = returned;
+        this.isReturned = returned;
     }
 }

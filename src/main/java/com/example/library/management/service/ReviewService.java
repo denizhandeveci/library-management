@@ -4,6 +4,7 @@ import com.example.library.management.entity.BookEntity;
 import com.example.library.management.entity.ReviewEntity;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.ReviewRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,18 +48,27 @@ public class ReviewService {
         double totalRatingPoints=0;
         BookEntity bookEntity = bookRepository.findById(bookId).get();
         List<ReviewEntity> reviewEntityList = reviewRepository.findByBookEntityId(bookId);
-        List<Integer> reviewPoints = new ArrayList<>();
         if (reviewEntityList.isEmpty()) {
             return "No reviews available for this book.";
         }
         for(ReviewEntity review:reviewEntityList){
-            reviewPoints.add(review.getRating());
+            totalRatingPoints = totalRatingPoints + review.getRating();
         }
-        for(Integer points:reviewPoints){
-            totalRatingPoints = totalRatingPoints + points;
-        }
-        double averageReviewPoints = totalRatingPoints/reviewPoints.size();
+
+        double averageReviewPoints = totalRatingPoints/reviewEntityList.size();
         return "The average ratings for " + "'" + bookEntity.getTitle() +"' is " + averageReviewPoints ;
+    }
+
+    public void deleteReviewById(Long reviewId){
+        if(!reviewRepository.existsById(reviewId)){
+            throw new RuntimeException("Review with id " + reviewId + " does not exist.");
+        }
+        reviewRepository.deleteById(reviewId);
+    }
+    @Transactional
+    public void deleteAllReviewsAndResetAutoIncrement(){
+        reviewRepository.deleteAll();
+        reviewRepository.resetAutoIncrement();
     }
 
 }

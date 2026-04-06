@@ -32,5 +32,13 @@ public class ReviewController {
     public String getAverageRating(@PathVariable Long bookId){
         return reviewService.getAverageRating(bookId);
     }
-
+    @DeleteMapping("/delete-review-by-id/{id}")
+    public void deleteReviewById(@PathVariable Long id) {
+        reviewService.deleteReviewById(id);
+    }
+    @PostMapping("/reset-reviews")
+    public String deleteAllReviewsAndResetAutoIncrement(){
+        reviewService.deleteAllReviewsAndResetAutoIncrement();
+        return "All the data in reviews DB is deleted and reset";
+    }
 }

@@ -39,7 +39,7 @@ public class BookController {
     @PostMapping("/reset-library")
     public String deleteAllBooksAndResetAutoIncrement(){
         bookService.deleteAllBooksAndResetAutoIncrement();
-        return "All the data in library deleted and reset";
+        return "All the data in library is deleted and reset";
     }
 
     @PostMapping("/search-book-by-title/{title}")

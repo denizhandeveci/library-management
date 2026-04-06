@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface LoanRepository extends JpaRepository<LoanEntity,Long> {
 
-    Optional<LoanEntity> findByUserEntityIdAndBookEntityIdAndIsReturnedFalse(Long userId, Long bookId);
+    Optional<LoanEntity> findByUserEntityIdAndBookEntityId(Long userId, Long bookId);
     boolean existsByBookEntityIdAndUserEntityIdAndIsReturnedFalse(Long bookId, Long userId);
 
 
