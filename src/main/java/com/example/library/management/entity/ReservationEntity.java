@@ -56,4 +56,8 @@ public class ReservationEntity {
     public void setBookId(BookEntity bookId) {
         this.bookEntity = bookId;
     }
+
+    public UserEntity getUserEntity() {
+        return userEntity;
+    }
 }

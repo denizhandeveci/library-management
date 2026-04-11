@@ -1,10 +1,6 @@
 package com.example.library.management.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
@@ -28,6 +24,8 @@ public class BookEntity {
     @Column
     private Boolean available;
 
+    private String coverImageUrl;
+
     @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LoanEntity> loans;
     @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -35,13 +33,21 @@ public class BookEntity {
 
 
 
-    public BookEntity( String author,Boolean available,String isbn,String title, String genre,Integer numOfCopies) {
+
+    public BookEntity(String author,
+                      Boolean available,
+                      String isbn,
+                      String title,
+                      String genre,
+                      Integer numOfCopies,
+                      String coverImageUrl) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
         this.genre = genre;
         this.available = available;
         this.numOfCopies = numOfCopies;
+        this.coverImageUrl = coverImageUrl;
     }
 
     public BookEntity() {
@@ -102,6 +108,14 @@ public class BookEntity {
 
     public void setNumOfCopies(Integer numOfCopies) {
         this.numOfCopies = numOfCopies;
+    }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl){
+        this.coverImageUrl = coverImageUrl;
     }
 
     @Override

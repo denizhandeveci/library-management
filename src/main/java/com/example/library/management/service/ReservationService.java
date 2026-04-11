@@ -32,4 +32,9 @@ public class ReservationService {
         reservationEntity.setBookId(bookRepository.findById(bookId).orElseThrow());
         return reservationRepository.save(reservationEntity);
     }
+
+    public void deleteReservationById(Long reviewId){
+        reservationRepository.deleteById(reviewId);
+
+    }
 }

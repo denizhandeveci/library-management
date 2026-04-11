@@ -5,11 +5,14 @@ import com.example.library.management.repository.BookRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 
 @Service
 public class BookService {
@@ -21,7 +24,52 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    public BookEntity createBook(BookEntity bookEntity){
+    public BookEntity createBook(BookEntity bookEntity, MultipartFile coverImage){
+        System.out.println("File empty? " + coverImage.isEmpty());
+        if (coverImage != null && !coverImage.isEmpty()) {
+            try {
+                // Folder where images will be stored
+                String uploadDirectory = "uploads/";
+
+                // Convert folder path into Java Path object
+                Path uploadPath = Paths.get(uploadDirectory);
+
+                // Create folder if it doesn't exist
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Get original file name (for example, "book.png")
+                String originalFileName = coverImage.getOriginalFilename();
+                System.out.println("Original file name: " + coverImage.getOriginalFilename());
+
+                // Extract file extension (for example, ".png")
+                String fileExtension = "";
+                if (originalFileName != null && originalFileName.contains(".")) {
+                    fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                }
+
+                // Generate unique file name to avoid conflicts
+                String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+
+                // Full file path: uploads/unique-name.png
+                Path filePath = uploadPath.resolve(uniqueFileName);
+
+                // Save file to disk
+                Files.copy(coverImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Save URL/path in database
+                bookEntity.setCoverImageUrl("/uploads/" + uniqueFileName);
+                System.out.println("Generated URL: " + "/uploads/" + uniqueFileName);
+
+            } catch (IOException e) {
+                // Handle file saving errors
+                throw new RuntimeException("Failed to save cover image", e);
+            }
+        }
+
+// Save book in database
+        System.out.println("Book URL before save: " + bookEntity.getCoverImageUrl());
         return bookRepository.save(bookEntity);
     }
 

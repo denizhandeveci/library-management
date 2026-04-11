@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,8 +25,23 @@ public class BookController {
 //        return bookService.createBook(bookEntity);
 //    }
     @PostMapping("/create-book")
-    public ResponseEntity<BookEntity> createBook(@RequestBody BookEntity bookEntity) {
-        BookEntity saved = bookService.createBook(bookEntity);
+    public ResponseEntity<BookEntity> createBook(@RequestParam String title,
+                                                 @RequestParam String author,
+                                                 @RequestParam String isbn,
+                                                 @RequestParam String genre,
+                                                 @RequestParam Integer numOfCopies,
+                                                 @RequestParam Boolean available,
+                                                 @RequestParam MultipartFile coverImage) {
+        BookEntity bookEntity = new BookEntity();
+        bookEntity.setTitle(title);
+        bookEntity.setAuthor(author);
+        bookEntity.setIsbn(isbn);
+        bookEntity.setGenre(genre);
+        bookEntity.setNumOfCopies(numOfCopies);
+        bookEntity.setAvailable(available);
+
+        BookEntity saved = bookService.createBook(bookEntity, coverImage);
+
         return ResponseEntity.ok(saved);
     }
     @PostMapping("/create-multiple-books")

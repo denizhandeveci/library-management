@@ -2,6 +2,7 @@ package com.example.library.management.service;
 
 import com.example.library.management.entity.BookEntity;
 import com.example.library.management.entity.LoanEntity;
+import com.example.library.management.entity.ReservationEntity;
 import com.example.library.management.entity.UserEntity;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.LoanRepository;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 public class LoanService {
@@ -69,20 +71,38 @@ public class LoanService {
 
 
     public void returnLoan(Long userId, Long bookId){
-        LoanEntity loanEntity = loanRepository.findByUserEntityIdAndBookEntityId(userId,bookId)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
 
+        // Finds the active loan. If the user loaned same book before and returned it we don't want it we want the active loan
+        LoanEntity loanEntity = loanRepository.findByUserEntityIdAndBookEntityIdAndIsReturnedFalse(userId,bookId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+        // if the book is already returned throw an exception and say it has already been returned.
         if(loanEntity.isReturned()){
             throw new IllegalStateException("Book has already been returned");
         }
+        // Else i set necessary fields
         loanEntity.setReturned(true);
         loanEntity.setReturnDate(LocalDate.now());
         BookEntity bookEntity = loanEntity.getBookEntity();
         bookEntity.setAvailable(true);
         bookEntity.setNumOfCopies(bookEntity.getNumOfCopies()+1);
-//        if(reservationRepository.findById(bookId).isPresent()){
-//            createLoan(bookId,reservationRepository.findById(bookId)::map)
-//        }
+
+        // Here i write a query to find the oldest reservation
+        // in other words if multiple reservations are created by separate users for the same book
+        // once the book is available again the first user that reserved the book will be able to loan it.
+        Optional<ReservationEntity> oldestReservation =
+                reservationRepository.findFirstByBookEntityIdOrderByIdAsc(bookId);
+        // Here is a simple if statement where i check if someone is waiting for this book
+        // if yes then i grab that reservation
+        if (oldestReservation.isPresent()) {
+            ReservationEntity reservationEntity = oldestReservation.get();
+
+            // here off of the oldest reservation i grab the userId and the id of the reservation
+            Long reservedUserId = reservationEntity.getUserId().getId();
+            // here i call the createLoan function i defined previously to create a loan
+            createLoan(bookId, reservedUserId);
+            // and finally i delete the reservation
+            reservationRepository.delete(reservationEntity);
+        }
         loanRepository.save(loanEntity);
-    }
+        }
 }
