@@ -17,4 +17,6 @@ public interface BookRepository extends JpaRepository<BookEntity,Long> {
     Optional<BookEntity> findByTitle(String title);
     List<BookEntity> findByGenre(String genre);
     List<BookEntity> findByAuthor(String author);
+    @Query("SELECT b FROM BookEntity b ORDER BY b.author ASC")
+    List<BookEntity> getAllBooksSortedByAuthorAsc();
 }

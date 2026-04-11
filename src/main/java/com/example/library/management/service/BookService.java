@@ -92,7 +92,7 @@ public class BookService {
                 .orElseThrow(() -> new NoSuchElementException("Book with title '" + title + "' not found."));
 
         return"'" + bookEntity.getTitle()+ "'" + " is in the library and has " +
-                bookEntity.getNumOfCopies() + " copies available.";
+                bookEntity.getNumOfCopiesAvailable() + " copies available.";
     }
 
     public String viewBook(Long id){
@@ -119,5 +119,9 @@ public class BookService {
         return "Here is the information about the book you are searching for:" + bookEntity.toString() +
                 "People who liked this genre also borrowed: " + recommandationsByGenreList +
                 " People who liked this author also borrowed: " + recommadationsByAuthorList;
+    }
+
+    public List<BookEntity> getAllBooksSortedByAuthorAsc(){
+        return bookRepository.getAllBooksSortedByAuthorAsc();
     }
 }

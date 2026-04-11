@@ -13,8 +13,8 @@ public class BookEntity {
     private Long id;
     @Column
     private String title;
-    @Column
-    private Integer numOfCopies;
+    private Integer numOfTotalCopies;
+    private Integer numOfCopiesAvailable;
     @Column
     private String author;
     @Column
@@ -39,14 +39,16 @@ public class BookEntity {
                       String isbn,
                       String title,
                       String genre,
-                      Integer numOfCopies,
+                      Integer numOfTotalCopies,
+                      Integer numOfCopiesAvailable,
                       String coverImageUrl) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
         this.genre = genre;
         this.available = available;
-        this.numOfCopies = numOfCopies;
+        this.numOfTotalCopies = numOfTotalCopies;
+        this.numOfCopiesAvailable = numOfCopiesAvailable;
         this.coverImageUrl = coverImageUrl;
     }
 
@@ -102,12 +104,20 @@ public class BookEntity {
         this.available = available;
     }
 
-    public Integer getNumOfCopies() {
-        return numOfCopies;
+    public Integer getNumOfTotalCopies() {
+        return numOfTotalCopies;
     }
 
-    public void setNumOfCopies(Integer numOfCopies) {
-        this.numOfCopies = numOfCopies;
+    public Integer getNumOfCopiesAvailable() {
+        return numOfCopiesAvailable;
+    }
+
+    public void setNumOfTotalCopies(Integer numOfTotalCopies) {
+        this.numOfTotalCopies = numOfTotalCopies;
+    }
+
+    public void setNumOfCopiesAvailable(Integer numOfCopiesAvailable) {
+        this.numOfCopiesAvailable = numOfCopiesAvailable;
     }
 
     public String getCoverImageUrl() {
@@ -122,7 +132,7 @@ public class BookEntity {
     public String toString() {
         return "BookEntity{" +
                 "title='" + title + '\'' +
-                ", numOfCopies=" + numOfCopies +
+                ", numOfTotalCopies=" + numOfTotalCopies +
                 ", author='" + author + '\'' +
                 ", isbn='" + isbn + '\'' +
                 ", genre='" + genre + '\'' +

@@ -57,9 +57,9 @@ public class LoanService {
             loanEntity.setDueDate(LocalDate.now().plusWeeks(2));
             loanEntity.setReturned(false);
             loanEntity.setReturnDate(null);
-            bookEntity.setNumOfCopies(bookEntity.getNumOfCopies() - 1);
+            bookEntity.setNumOfCopiesAvailable(bookEntity.getNumOfCopiesAvailable() - 1);
 
-            if (bookEntity.getNumOfCopies() == 0) {
+            if (bookEntity.getNumOfCopiesAvailable() == 0) {
                 bookEntity.setAvailable(false);
             }
             loanEntity.setBookEntity(bookEntity);
@@ -84,8 +84,8 @@ public class LoanService {
         loanEntity.setReturnDate(LocalDate.now());
         BookEntity bookEntity = loanEntity.getBookEntity();
         bookEntity.setAvailable(true);
-        bookEntity.setNumOfCopies(bookEntity.getNumOfCopies()+1);
-
+        bookEntity.setNumOfCopiesAvailable(bookEntity.getNumOfCopiesAvailable()+1);
+        //bookRepository.save(bookEntity);
         // Here i write a query to find the oldest reservation
         // in other words if multiple reservations are created by separate users for the same book
         // once the book is available again the first user that reserved the book will be able to loan it.

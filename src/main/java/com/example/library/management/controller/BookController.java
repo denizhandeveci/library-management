@@ -29,7 +29,8 @@ public class BookController {
                                                  @RequestParam String author,
                                                  @RequestParam String isbn,
                                                  @RequestParam String genre,
-                                                 @RequestParam Integer numOfCopies,
+                                                 @RequestParam Integer numOfTotalCopies,
+                                                 @RequestParam Integer numOfCopiesAvailable,
                                                  @RequestParam Boolean available,
                                                  @RequestParam MultipartFile coverImage) {
         BookEntity bookEntity = new BookEntity();
@@ -37,7 +38,8 @@ public class BookController {
         bookEntity.setAuthor(author);
         bookEntity.setIsbn(isbn);
         bookEntity.setGenre(genre);
-        bookEntity.setNumOfCopies(numOfCopies);
+        bookEntity.setNumOfTotalCopies(numOfTotalCopies);
+        bookEntity.setNumOfCopiesAvailable(numOfCopiesAvailable);
         bookEntity.setAvailable(available);
 
         BookEntity saved = bookService.createBook(bookEntity, coverImage);
@@ -65,6 +67,11 @@ public class BookController {
     @GetMapping("/view-book/{id}")
     public String viewBook(@PathVariable Long id){
         return bookService.viewBook(id);
+    }
+
+    @GetMapping("/get-all-books-asc")
+    public List<BookEntity> getAllBooksSortedByAuthorAsc() {
+        return bookService.getAllBooksSortedByAuthorAsc();
     }
 
 
