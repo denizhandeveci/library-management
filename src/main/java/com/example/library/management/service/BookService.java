@@ -124,4 +124,8 @@ public class BookService {
     public List<BookEntity> getAllBooksSortedByAuthorAsc(){
         return bookRepository.getAllBooksSortedByAuthorAsc();
     }
+
+    public List<BookEntity> getAllBooks(){
+        return bookRepository.findAll();
+    }
 }

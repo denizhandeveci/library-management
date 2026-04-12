@@ -74,6 +74,11 @@ public class BookController {
         return bookService.getAllBooksSortedByAuthorAsc();
     }
 
+    @GetMapping("/get-all-books")
+    public List<BookEntity> getAllBooks(){
+        return bookService.getAllBooks();
+    }
+
 
 
 }

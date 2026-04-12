@@ -27,6 +27,13 @@ public class ReservationService {
 
     public ReservationEntity makeReservation(Long userId, Long bookId){
         ReservationEntity reservationEntity = new ReservationEntity();
+        boolean exists = reservationRepository
+                .existsByBookEntityIdAndUserEntityId(bookId, userId);
+
+        if (exists) {
+            throw new IllegalStateException("User ID with" + reservationEntity.getUserId() +
+                    "already has a reservation for this book.");
+        }
         reservationEntity.setReservationDate(LocalDate.now());
         reservationEntity.setUserId(userRepository.findById(userId).orElseThrow());
         reservationEntity.setBookId(bookRepository.findById(bookId).orElseThrow());

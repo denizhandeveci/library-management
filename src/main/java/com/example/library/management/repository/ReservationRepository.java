@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface ReservationRepository extends JpaRepository<ReservationEntity,Long> {
 
     Optional<ReservationEntity> findFirstByBookEntityIdOrderByIdAsc(Long bookId);
+    //checks if a reservation exists by the same book and same user
+    boolean existsByBookEntityIdAndUserEntityId(Long bookId, Long userId);
 }
