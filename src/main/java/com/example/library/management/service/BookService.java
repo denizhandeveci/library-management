@@ -103,8 +103,8 @@ public class BookService {
             return "Book with Id: " + id + " is not found";
         }
 
-        List<BookEntity> sameGenreBooks = bookRepository.findByGenre(bookEntity.get().getGenre() );
-        List<BookEntity> sameAuthorBooks = bookRepository.findByAuthor(bookEntity.get().getAuthor());
+        List<BookEntity> sameGenreBooks = bookRepository.fetchBooksByGenre(bookEntity.get().getGenre() );
+        List<BookEntity> sameAuthorBooks = bookRepository.fetchBooksByAuthorName(bookEntity.get().getAuthor());
 
         for(BookEntity b:sameGenreBooks){
             if(!b.getId().equals(id)){
@@ -123,6 +123,10 @@ public class BookService {
 
     public List<BookEntity> getAllBooksSortedByAuthorAsc(){
         return bookRepository.getAllBooksSortedByAuthorAsc();
+    }
+
+    public List<BookEntity> getAllBooksSortedByAuthorDesc(){
+        return bookRepository.getAllBooksSortedByAuthorDesc();
     }
 
     public List<BookEntity> getAllBooks(){

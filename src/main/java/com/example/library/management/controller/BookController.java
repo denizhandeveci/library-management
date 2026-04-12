@@ -69,11 +69,15 @@ public class BookController {
         return bookService.viewBook(id);
     }
 
-    @GetMapping("/get-all-books-asc")
+    @GetMapping("/get-all-books-author-asc")
     public List<BookEntity> getAllBooksSortedByAuthorAsc() {
         return bookService.getAllBooksSortedByAuthorAsc();
     }
 
+    @GetMapping("get-all-books-author-desc")
+    public List<BookEntity> getAllBooksSortedByAuthorDesc() {
+        return bookService.getAllBooksSortedByAuthorDesc();
+    }
     @GetMapping("/get-all-books")
     public List<BookEntity> getAllBooks(){
         return bookService.getAllBooks();
