@@ -21,16 +21,19 @@ public class UserEntity {
     private String phoneNumber;
     @Column(name="address")
     private String address;
+    @Column(unique = true, nullable = false)
+    private String password;
 
     @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL)
     private List<LoanEntity> loans;
     @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL)
     private List<ReservationEntity> reservations;
-    public UserEntity( String name, String email, String phoneNumber, String address) {
+    public UserEntity( String name, String email, String phoneNumber, String address, String password) {
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.address = address;
+        this.password = password;
         //this.loans = loans;
     }
 
@@ -78,7 +81,14 @@ public class UserEntity {
         this.address = address;
     }
 
-//    public List<LoanEntity> getLoans() {
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    //    public List<LoanEntity> getLoans() {
 //        return loans;
 //    }
 //
