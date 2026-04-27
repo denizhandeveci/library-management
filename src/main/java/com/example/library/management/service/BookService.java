@@ -1,5 +1,7 @@
 package com.example.library.management.service;
 
+import com.example.library.management.dto.BookRequestDTO;
+import com.example.library.management.dto.BookResponseDTO;
 import com.example.library.management.entity.BookEntity;
 import com.example.library.management.repository.BookRepository;
 import jakarta.transaction.Transactional;
@@ -24,8 +26,9 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    public BookEntity createBook(BookEntity bookEntity, MultipartFile coverImage){
+    public BookResponseDTO createBook(BookRequestDTO bookRequestDTO, MultipartFile coverImage){
         System.out.println("File empty? " + coverImage.isEmpty());
+        BookEntity bookEntity = mapToEntity(bookRequestDTO);
         if (coverImage != null && !coverImage.isEmpty()) {
             try {
                 // Folder where images will be stored
@@ -70,7 +73,9 @@ public class BookService {
 
 // Save book in database
         System.out.println("Book URL before save: " + bookEntity.getCoverImageUrl());
-        return bookRepository.save(bookEntity);
+        BookEntity savedBook = bookRepository.save(bookEntity);
+        return mapToDTO(savedBook);
+
     }
 
     public List<BookEntity> createMultipleBooks(List<BookEntity> listOfBooks){
@@ -103,8 +108,8 @@ public class BookService {
             return "Book with Id: " + id + " is not found";
         }
 
-        List<BookEntity> sameGenreBooks = bookRepository.fetchBooksByGenre(bookEntity.get().getGenre() );
-        List<BookEntity> sameAuthorBooks = bookRepository.fetchBooksByAuthorName(bookEntity.get().getAuthor());
+        List<BookEntity> sameGenreBooks = bookRepository.findByGenre(bookEntity.get().getGenre() );
+        List<BookEntity> sameAuthorBooks = bookRepository.findByAuthor(bookEntity.get().getAuthor());
 
         for(BookEntity b:sameGenreBooks){
             if(!b.getId().equals(id)){
@@ -125,11 +130,40 @@ public class BookService {
         return bookRepository.getAllBooksSortedByAuthorAsc();
     }
 
-    public List<BookEntity> getAllBooksSortedByAuthorDesc(){
-        return bookRepository.getAllBooksSortedByAuthorDesc();
+    public List<BookResponseDTO> getAllBooks(){
+        return bookRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public List<BookEntity> getAllBooks(){
-        return bookRepository.findAll();
+    public BookResponseDTO mapToDTO (BookEntity bookEntity){
+        BookResponseDTO dto = new BookResponseDTO();
+
+        dto.setId(bookEntity.getId());
+        dto.setTitle(bookEntity.getTitle());
+        dto.setAuthor(bookEntity.getAuthor());
+        dto.setIsbn(bookEntity.getIsbn());
+        dto.setGenre(bookEntity.getGenre());
+        dto.setNumOfTotalCopies(bookEntity.getNumOfTotalCopies());
+        dto.setNumOfCopiesAvailable(bookEntity.getNumOfCopiesAvailable());
+        dto.setAvailable(bookEntity.isAvailable());
+        dto.setCoverImageUrl(bookEntity.getCoverImageUrl());
+
+        return dto;
+    }
+
+    private BookEntity mapToEntity(BookRequestDTO dto) {
+        BookEntity book = new BookEntity();
+
+        book.setTitle(dto.getTitle());
+        book.setAuthor(dto.getAuthor());
+        book.setIsbn(dto.getIsbn());
+        book.setGenre(dto.getGenre());
+        book.setNumOfTotalCopies(dto.getNumOfTotalCopies());
+        book.setNumOfCopiesAvailable(dto.getNumOfCopiesAvailable());
+        book.setAvailable(dto.getAvailable());
+
+        return book;
     }
 }

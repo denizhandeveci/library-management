@@ -1,6 +1,9 @@
 package com.example.library.management.controller;
 
+import com.example.library.management.dto.BookRequestDTO;
+import com.example.library.management.dto.BookResponseDTO;
 import com.example.library.management.entity.BookEntity;
+import com.example.library.management.repository.BookRepository;
 import com.example.library.management.service.BookService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,25 +27,11 @@ public class BookController {
 //    public BookEntity createBook(@RequestBody BookEntity bookEntity){
 //        return bookService.createBook(bookEntity);
 //    }
-    @PostMapping("/create-book")
-    public ResponseEntity<BookEntity> createBook(@RequestParam String title,
-                                                 @RequestParam String author,
-                                                 @RequestParam String isbn,
-                                                 @RequestParam String genre,
-                                                 @RequestParam Integer numOfTotalCopies,
-                                                 @RequestParam Integer numOfCopiesAvailable,
-                                                 @RequestParam Boolean available,
-                                                 @RequestParam MultipartFile coverImage) {
-        BookEntity bookEntity = new BookEntity();
-        bookEntity.setTitle(title);
-        bookEntity.setAuthor(author);
-        bookEntity.setIsbn(isbn);
-        bookEntity.setGenre(genre);
-        bookEntity.setNumOfTotalCopies(numOfTotalCopies);
-        bookEntity.setNumOfCopiesAvailable(numOfCopiesAvailable);
-        bookEntity.setAvailable(available);
+    @PostMapping(value = "/create-book", consumes = "multipart/form-data")
+    public ResponseEntity<BookResponseDTO> createBook(@RequestPart("book")BookRequestDTO bookRequestDTO,
+                                                      @RequestPart("coverImage")MultipartFile coverImage)  {
 
-        BookEntity saved = bookService.createBook(bookEntity, coverImage);
+        BookResponseDTO saved = bookService.createBook(bookRequestDTO, coverImage);
 
         return ResponseEntity.ok(saved);
     }
@@ -79,7 +68,7 @@ public class BookController {
         return bookService.getAllBooksSortedByAuthorDesc();
     }
     @GetMapping("/get-all-books")
-    public List<BookEntity> getAllBooks(){
+    public List<BookResponseDTO> getAllBooks(){
         return bookService.getAllBooks();
     }
 

@@ -26,8 +26,6 @@ public class BookEntity {
 
     private String coverImageUrl;
 
-    @Column(unique = true, nullable = false)
-    private String password;
 
     @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LoanEntity> loans;
@@ -44,8 +42,7 @@ public class BookEntity {
                       String genre,
                       Integer numOfTotalCopies,
                       Integer numOfCopiesAvailable,
-                      String coverImageUrl,
-                      String password){
+                      String coverImageUrl){
         this.title = title;
         this.author = author;
         this.isbn = isbn;
@@ -54,7 +51,6 @@ public class BookEntity {
         this.numOfTotalCopies = numOfTotalCopies;
         this.numOfCopiesAvailable = numOfCopiesAvailable;
         this.coverImageUrl = coverImageUrl;
-        this.password = password;
     }
 
     public BookEntity() {
