@@ -1,5 +1,7 @@
 package com.example.library.management.controller;
 
+import com.example.library.management.dto.LoanRequestDTO;
+import com.example.library.management.dto.LoanResponseDTO;
 import com.example.library.management.entity.LoanEntity;
 import com.example.library.management.service.LoanService;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +19,8 @@ public class LoanController {
     }
 
     @PostMapping("/create-loan-userId-bookId/{userId}/{bookId}")
-    public LoanEntity createLoan(@PathVariable Long userId, @PathVariable Long bookId){
-        return loanService.createLoan(bookId, userId);
+    public LoanResponseDTO createLoan(@RequestBody LoanRequestDTO loanRequestDTO){
+        return loanService.createLoan(loanRequestDTO);
     }
 
     @PostMapping("/return-book/{userId}/{bookId}")

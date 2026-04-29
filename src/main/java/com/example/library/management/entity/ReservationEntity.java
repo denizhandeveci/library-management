@@ -1,5 +1,7 @@
 package com.example.library.management.entity;
 
+import com.example.library.management.dto.ReservationRequestDTO;
+import com.example.library.management.service.ReservationService;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -59,5 +61,17 @@ public class ReservationEntity {
 
     public UserEntity getUserEntity() {
         return userEntity;
+    }
+
+    public void setUserEntity(UserEntity userEntity) {
+        this.userEntity = userEntity;
+    }
+
+    public BookEntity getBookEntity() {
+        return bookEntity;
+    }
+
+    public void setBookEntity(BookEntity bookEntity) {
+        this.bookEntity = bookEntity;
     }
 }
