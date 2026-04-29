@@ -1,17 +1,16 @@
 package com.example.library.management.service;
 
-import com.example.library.management.entity.BookEntity;
-import com.example.library.management.entity.LoanEntity;
+import com.example.library.management.dto.UserRequestDTO;
+import com.example.library.management.dto.UserResponseDTO;
 import com.example.library.management.entity.UserEntity;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.LoanRepository;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 
 @Service
 public class UserService {
@@ -31,11 +30,14 @@ public class UserService {
         this.reviewRepository = reviewRepository;
     }
 
-    public UserEntity createUser(UserEntity userEntity){
-        if(userRepository.existsByEmail(userEntity.getEmail())){
+    public UserResponseDTO createUser(UserRequestDTO userRequestDTO){
+        if(userRepository.existsByEmail(userRequestDTO.getEmail())){
             throw new RuntimeException("This email address has already been used. Please use another email address.");
         }
-        return userRepository.save(userEntity);
+        UserEntity userEntity = mapToEntity(userRequestDTO);
+        UserEntity savedUser = userRepository.save(userEntity);
+
+        return mapToDTO(savedUser);
     }
 
     @Transactional
@@ -46,14 +48,28 @@ public class UserService {
 
 
     }
+    public UserEntity mapToEntity(UserRequestDTO userRequestDTO){
+        UserEntity userEntity = new UserEntity();
 
-//    public void returnBook(Long userId, Long bookId){
-//        BookEntity bookEntity = bookRepository.findById(bookId).orElseThrow();
-//        LoanEntity loanEntity = loanRepository.getLoanEntityByBookEntityIdAndUserEntityId(userId,bookId);
-//        bookEntity.setAvailable(true);
-//        loanEntity.setReturnDate(LocalDate.now());
-//        loanEntity.setReturned(true);
-//
-//    }
+        userEntity.setName(userRequestDTO.getName());
+        userEntity.setEmail(userRequestDTO.getEmail());
+        userEntity.setPhoneNumber(userRequestDTO.getPhoneNumber());
+        userEntity.setAddress(userRequestDTO.getAddress());
+        userEntity.setPassword(userRequestDTO.getPassword());
+
+        return userEntity;
+    }
+
+    public UserResponseDTO mapToDTO(UserEntity userEntity){
+        UserResponseDTO userResponseDTO = new UserResponseDTO();
+
+        userResponseDTO.setId(userEntity.getId());
+        userResponseDTO.setName(userEntity.getName());
+        userResponseDTO.setEmail(userEntity.getEmail());
+        userResponseDTO.setAddress(userEntity.getAddress());
+        userResponseDTO.setPhoneNumber(userEntity.getPhoneNumber());
+
+        return userResponseDTO;
+    }
 
 }

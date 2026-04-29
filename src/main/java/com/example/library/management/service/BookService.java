@@ -78,8 +78,15 @@ public class BookService {
 
     }
 
-    public List<BookEntity> createMultipleBooks(List<BookEntity> listOfBooks){
-        return bookRepository.saveAll(listOfBooks);
+    public List<BookResponseDTO> createMultipleBooks(List<BookRequestDTO> listOfBooks){
+        List<BookEntity> books = listOfBooks.stream()
+                .map(this::mapToEntity)
+                .toList();
+        List<BookEntity> savedBooks = bookRepository.saveAll(books);
+
+        return savedBooks.stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     public void deleteBookById(Long id){
@@ -126,8 +133,11 @@ public class BookService {
                 " People who liked this author also borrowed: " + recommadationsByAuthorList;
     }
 
-    public List<BookEntity> getAllBooksSortedByAuthorAsc(){
-        return bookRepository.getAllBooksSortedByAuthorAsc();
+    public List<BookResponseDTO> getAllBooksSortedByAuthorAsc(){
+        return bookRepository.getAllBooksSortedByAuthorAsc()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     public List<BookResponseDTO> getAllBooks(){
@@ -154,16 +164,16 @@ public class BookService {
     }
 
     private BookEntity mapToEntity(BookRequestDTO dto) {
-        BookEntity book = new BookEntity();
+        BookEntity bookEntity = new BookEntity();
 
-        book.setTitle(dto.getTitle());
-        book.setAuthor(dto.getAuthor());
-        book.setIsbn(dto.getIsbn());
-        book.setGenre(dto.getGenre());
-        book.setNumOfTotalCopies(dto.getNumOfTotalCopies());
-        book.setNumOfCopiesAvailable(dto.getNumOfCopiesAvailable());
-        book.setAvailable(dto.getAvailable());
+        bookEntity.setTitle(dto.getTitle());
+        bookEntity.setAuthor(dto.getAuthor());
+        bookEntity.setIsbn(dto.getIsbn());
+        bookEntity.setGenre(dto.getGenre());
+        bookEntity.setNumOfTotalCopies(dto.getNumOfTotalCopies());
+        bookEntity.setNumOfCopiesAvailable(dto.getNumOfCopiesAvailable());
+        bookEntity.setAvailable(dto.getAvailable());
 
-        return book;
+        return bookEntity;
     }
 }

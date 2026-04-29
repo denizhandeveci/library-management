@@ -1,5 +1,8 @@
 package com.example.library.management.service;
 
+import com.example.library.management.dto.LoanRequestDTO;
+import com.example.library.management.dto.LoanResponseDTO;
+import com.example.library.management.dto.ReservationRequestDTO;
 import com.example.library.management.entity.BookEntity;
 import com.example.library.management.entity.LoanEntity;
 import com.example.library.management.entity.ReservationEntity;
@@ -38,9 +41,12 @@ public class LoanService {
     }
 
 
-    public LoanEntity createLoan(Long bookId, Long userId) {
-        BookEntity bookEntity = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found with ID: " + bookId));
+    public LoanResponseDTO createLoan(LoanRequestDTO loanRequestDTO) {
+
+        LoanEntity loanEntity = mapToEntity(loanRequestDTO);
+        BookEntity bookEntity = loanEntity.getBookEntity();
+        Long bookId = bookEntity.getId();
+        Long userId = loanEntity.getUserEntity().getId();
 
         boolean loanedAndNotReturned = loanRepository.existsByBookEntityIdAndUserEntityIdAndIsReturnedFalse(bookId, userId);
 
@@ -49,25 +55,22 @@ public class LoanService {
         }
 
         if (!bookEntity.isAvailable()) {
-            reservationService.makeReservation(userId,bookId);
-            throw new IllegalStateException("Book is currently not available. Reservation has been made.");
-        }else{
-            LoanEntity loanEntity = new LoanEntity();
-            loanEntity.setLoanDate(LocalDate.now());
-            loanEntity.setDueDate(LocalDate.now().plusWeeks(2));
-            loanEntity.setReturned(false);
-            loanEntity.setReturnDate(null);
-            bookEntity.setNumOfCopiesAvailable(bookEntity.getNumOfCopiesAvailable() - 1);
+            ReservationRequestDTO reservationRequestDTO = new ReservationRequestDTO();
+            reservationRequestDTO.setUserId(userId);
+            reservationRequestDTO.setBookId(bookId);
+            reservationService.makeReservation(reservationRequestDTO);
 
-            if (bookEntity.getNumOfCopiesAvailable() == 0) {
-                bookEntity.setAvailable(false);
-            }
-            loanEntity.setBookEntity(bookEntity);
-            loanEntity.setUserEntity(userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId)));
-            return loanRepository.save(loanEntity);
+            throw new IllegalStateException("Book is currently not available. Reservation has been made.");
         }
-    }
+        bookEntity.setNumOfCopiesAvailable(bookEntity.getNumOfCopiesAvailable() - 1);
+
+        if (bookEntity.getNumOfCopiesAvailable() == 0) {
+            bookEntity.setAvailable(false);
+        }
+        LoanEntity savedLoan = loanRepository.save(loanEntity);
+        return mapToDTO(savedLoan);
+        }
+
 
 
     public void returnLoan(Long userId, Long bookId){
@@ -99,10 +102,50 @@ public class LoanService {
             // here off of the oldest reservation i grab the userId and the id of the reservation
             Long reservedUserId = reservationEntity.getUserId().getId();
             // here i call the createLoan function i defined previously to create a loan
-            createLoan(bookId, reservedUserId);
+            LoanRequestDTO dto = new LoanRequestDTO();
+            dto.setBookId(bookId);
+            dto.setUserId(reservedUserId);
+
+            createLoan(dto);
             // and finally i delete the reservation
             reservationRepository.delete(reservationEntity);
         }
         loanRepository.save(loanEntity);
         }
+
+    public LoanResponseDTO mapToDTO(LoanEntity loanEntity){
+        LoanResponseDTO dto = new LoanResponseDTO();
+
+        dto.setId(loanEntity.getId());
+        dto.setBookId(loanEntity.getBookEntity().getId());
+        dto.setBookTitle(loanEntity.getBookEntity().getTitle());
+        dto.setUserId(loanEntity.getUserEntity().getId());
+        dto.setUserName(loanEntity.getUserEntity().getName());
+        dto.setLoanDate(loanEntity.getLoanDate());
+        dto.setDueDate(loanEntity.getDueDate());
+        dto.setReturnDate(loanEntity.getReturnDate());
+        dto.setReturned(loanEntity.isReturned());
+
+        return dto;
+    }
+
+    public LoanEntity mapToEntity(LoanRequestDTO loanRequestDTO){
+        BookEntity book = bookRepository.findById(loanRequestDTO.getBookId())
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        UserEntity user = userRepository.findById(loanRequestDTO.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        LoanEntity loan = new LoanEntity();
+
+        loan.setBookEntity(book);
+        loan.setUserEntity(user);
+        loan.setLoanDate(LocalDate.now());
+        loan.setDueDate(LocalDate.now().plusWeeks(2));
+
+        loan.setReturned(false);
+        loan.setReturnDate(null);
+
+        return loan;
+    }
 }

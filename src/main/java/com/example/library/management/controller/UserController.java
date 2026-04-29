@@ -1,5 +1,7 @@
 package com.example.library.management.controller;
 
+import com.example.library.management.dto.UserRequestDTO;
+import com.example.library.management.dto.UserResponseDTO;
 import com.example.library.management.entity.UserEntity;
 import com.example.library.management.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +15,8 @@ public class UserController {
         this.userService = userService;
     }
     @PostMapping("/create-user")
-    public UserEntity createUser(@RequestBody UserEntity userEntity){
-        return userService.createUser(userEntity);
+    public UserResponseDTO createUser(@RequestBody UserRequestDTO userRequestDTO){
+        return userService.createUser(userRequestDTO);
     }
 
     @DeleteMapping("/delete-user/{userId}")

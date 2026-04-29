@@ -36,7 +36,7 @@ public class BookController {
         return ResponseEntity.ok(saved);
     }
     @PostMapping("/create-multiple-books")
-    public List<BookEntity> createMultipleBooks(@RequestBody List<BookEntity> listOfBooks){
+    public List<BookResponseDTO> createMultipleBooks(@RequestBody List<BookRequestDTO> listOfBooks){
         return bookService.createMultipleBooks(listOfBooks);
     }
     @DeleteMapping("/delete-book-by-id/{id}")
@@ -58,15 +58,11 @@ public class BookController {
         return bookService.viewBook(id);
     }
 
-    @GetMapping("/get-all-books-author-asc")
-    public List<BookEntity> getAllBooksSortedByAuthorAsc() {
+    @GetMapping("/get-all-books-asc")
+    public List<BookResponseDTO> getAllBooksSortedByAuthorAsc() {
         return bookService.getAllBooksSortedByAuthorAsc();
     }
 
-    @GetMapping("get-all-books-author-desc")
-    public List<BookEntity> getAllBooksSortedByAuthorDesc() {
-        return bookService.getAllBooksSortedByAuthorDesc();
-    }
     @GetMapping("/get-all-books")
     public List<BookResponseDTO> getAllBooks(){
         return bookService.getAllBooks();
