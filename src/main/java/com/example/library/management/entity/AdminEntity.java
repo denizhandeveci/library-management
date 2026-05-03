@@ -2,29 +2,35 @@ package com.example.library.management.entity;
 
 import jakarta.persistence.*;
 
+
 @Entity
+@Table(name="admin_entity")
 public class AdminEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
     private Long id;
-
+    @Column(name="name")
     private String name;
-    @Column(unique = true, nullable = false)
-
+    @Column(name="email")
     private String email;
-    private String password;
+    @Column(name="phone_number")
     private String phoneNumber;
+    @Column(name="address")
     private String address;
+    @Column(unique = true, nullable = false)
+    private String password;
+
+    public AdminEntity( String name, String email, String phoneNumber, String address, String password) {
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.password = password;
+    }
 
     public AdminEntity(){
 
-    }
-    public AdminEntity(Long id, String email, String password, String phoneNumber, String address){
-        this.id = id;
-        this.email = email;
-        this.password = password;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
     }
 
     public Long getId() {
@@ -51,14 +57,6 @@ public class AdminEntity {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -74,4 +72,20 @@ public class AdminEntity {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    //    public List<LoanEntity> getLoans() {
+//        return loans;
+//    }
+//
+//    public void setLoans(List<LoanEntity> loans) {
+//        this.loans = loans;
+//    }
+
 }

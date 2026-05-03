@@ -5,10 +5,9 @@ public class BookRequestDTO {
     private String author;
     private String isbn;
     private String genre;
-
     private Integer numOfTotalCopies;
     private Integer numOfCopiesAvailable;
-
+    private String coverImageUrl;
     private Boolean available;
 
 
@@ -62,6 +61,14 @@ public class BookRequestDTO {
 
     public Boolean getAvailable() {
         return available;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
     }
 
     public void setAvailable(Boolean available) {

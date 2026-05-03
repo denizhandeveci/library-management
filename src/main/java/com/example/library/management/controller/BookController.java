@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.print.Book;
 import java.util.List;
 
 @RestController
@@ -27,11 +28,16 @@ public class BookController {
 //    public BookEntity createBook(@RequestBody BookEntity bookEntity){
 //        return bookService.createBook(bookEntity);
 //    }
-    @PostMapping(value = "/create-book", consumes = "multipart/form-data")
-    public ResponseEntity<BookResponseDTO> createBook(@RequestPart("book")BookRequestDTO bookRequestDTO,
-                                                      @RequestPart("coverImage")MultipartFile coverImage)  {
+    @PutMapping("/update-book/{id}")
+    @Transactional
+    public ResponseEntity<BookResponseDTO> updateBook(@PathVariable("id") Long id, @RequestBody BookRequestDTO bookRequestDTO){
+        return bookService.updateBook(id, bookRequestDTO);
+    }
 
-        BookResponseDTO saved = bookService.createBook(bookRequestDTO, coverImage);
+    @PostMapping(value = "/create-book")
+    public ResponseEntity<BookResponseDTO> createBook(@RequestBody BookRequestDTO bookRequestDTO)  {
+
+        BookResponseDTO saved = bookService.create(bookRequestDTO);
 
         return ResponseEntity.ok(saved);
     }
@@ -67,7 +73,5 @@ public class BookController {
     public List<BookResponseDTO> getAllBooks(){
         return bookService.getAllBooks();
     }
-
-
 
 }
