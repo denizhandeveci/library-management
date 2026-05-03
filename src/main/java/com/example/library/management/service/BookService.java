@@ -4,10 +4,17 @@ import com.example.library.management.dto.BookRequestDTO;
 import com.example.library.management.dto.BookResponseDTO;
 import com.example.library.management.entity.BookEntity;
 import com.example.library.management.repository.BookRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +31,45 @@ public class BookService {
     @Autowired
     public BookService(BookRepository bookRepository){
         this.bookRepository = bookRepository;
+    }
+
+    public ResponseEntity<BookResponseDTO> updateBook(Long id,BookRequestDTO bookRequestDTO) {
+        BookEntity bookEntity = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
+        int downgradedBookNumber = bookRequestDTO.getNumOfTotalCopies() - bookEntity.getNumOfTotalCopies();
+
+        if (downgradedBookNumber < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "The total number of copies cannot be reduced below zero.");
+        }
+
+        int pseudoNumOfAvailableCopy = downgradedBookNumber + bookEntity.getNumOfCopiesAvailable();
+        bookEntity.setNumOfCopiesAvailable(pseudoNumOfAvailableCopy);
+        bookEntity.setTitle(bookRequestDTO.getTitle());
+        bookEntity.setAuthor(bookRequestDTO.getAuthor());
+        bookEntity.setGenre(bookRequestDTO.getGenre());
+        bookEntity.setIsbn(bookRequestDTO.getIsbn());
+        bookEntity.setNumOfTotalCopies(bookRequestDTO.getNumOfTotalCopies());
+        bookEntity.setCoverImageUrl(bookRequestDTO.getCoverImageUrl());
+
+        bookEntity = bookRepository.save(bookEntity);
+
+        return ResponseEntity.ok(mapToDTO(bookEntity));
+    }
+
+    public BookResponseDTO create(BookRequestDTO bookRequestDTO){
+        BookEntity bookEntity = new BookEntity();
+        bookEntity.setTitle(bookRequestDTO.getTitle());
+        bookEntity.setAuthor(bookRequestDTO.getAuthor());
+        bookEntity.setIsbn(bookRequestDTO.getIsbn());
+        bookEntity.setGenre(bookRequestDTO.getGenre());
+        bookEntity.setNumOfTotalCopies(bookRequestDTO.getNumOfTotalCopies());
+        bookEntity.setCoverImageUrl(bookRequestDTO.getCoverImageUrl());
+        bookEntity.setAvailable(true);
+        bookEntity.setNumOfCopiesAvailable(bookRequestDTO.getNumOfTotalCopies());
+
+        bookEntity = bookRepository.save(bookEntity);
+        return mapToDTO(bookEntity);
     }
 
     public BookResponseDTO createBook(BookRequestDTO bookRequestDTO, MultipartFile coverImage){
@@ -115,8 +161,8 @@ public class BookService {
             return "Book with Id: " + id + " is not found";
         }
 
-        List<BookEntity> sameGenreBooks = bookRepository.findByGenre(bookEntity.get().getGenre() );
-        List<BookEntity> sameAuthorBooks = bookRepository.findByAuthor(bookEntity.get().getAuthor());
+        List<BookEntity> sameGenreBooks = bookRepository.fetchBooksByGenre(bookEntity.get().getGenre() );
+        List<BookEntity> sameAuthorBooks = bookRepository.fetchBooksByAuthorName(bookEntity.get().getAuthor());
 
         for(BookEntity b:sameGenreBooks){
             if(!b.getId().equals(id)){

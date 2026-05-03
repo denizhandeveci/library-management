@@ -1,5 +1,6 @@
 package com.example.library.management.service;
 
+import com.example.library.management.dto.BookResponseDTO;
 import com.example.library.management.dto.UserRequestDTO;
 import com.example.library.management.dto.UserResponseDTO;
 import com.example.library.management.entity.UserEntity;
@@ -10,7 +11,11 @@ import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
@@ -48,6 +53,23 @@ public class UserService {
 
 
     }
+
+    public ResponseEntity<UserResponseDTO> getUser(String email, String password){
+
+        if(userRepository.findByEmailAndPassword(email, password).isPresent()){
+            return ResponseEntity.ok(mapToDTO(userRepository.findByEmailAndPassword(email, password).get()));
+        };
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    public List<UserResponseDTO> getAllUsers(){
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
     public UserEntity mapToEntity(UserRequestDTO userRequestDTO){
         UserEntity userEntity = new UserEntity();
 
