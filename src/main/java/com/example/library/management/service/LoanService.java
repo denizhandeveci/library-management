@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -40,6 +42,14 @@ public class LoanService {
         this.reservationService = reservationService;
     }
 
+    public List<LoanResponseDTO> findAllLoans(Long userId) {
+        List<LoanEntity> loanEntities = this.loanRepository.findAllByUserEntityIdAndIsReturnedFalse(userId);
+        List<LoanResponseDTO> loanResponseDTOS = new ArrayList<>();
+        for(LoanEntity loanEntity : loanEntities) {
+            loanResponseDTOS.add(mapToDTO(loanEntity));
+        }
+        return loanResponseDTOS;
+    }
 
     public LoanResponseDTO createLoan(LoanRequestDTO loanRequestDTO) {
 
@@ -58,7 +68,7 @@ public class LoanService {
             ReservationRequestDTO reservationRequestDTO = new ReservationRequestDTO();
             reservationRequestDTO.setUserId(userId);
             reservationRequestDTO.setBookId(bookId);
-            reservationService.makeReservation(reservationRequestDTO);
+            reservationService.makeReservation(reservationRequestDTO.getUserId(), reservationRequestDTO.getBookId());
 
             throw new IllegalStateException("Book is currently not available. Reservation has been made.");
         }
@@ -125,6 +135,9 @@ public class LoanService {
         dto.setDueDate(loanEntity.getDueDate());
         dto.setReturnDate(loanEntity.getReturnDate());
         dto.setReturned(loanEntity.isReturned());
+        dto.setIsbn(loanEntity.getBookEntity().getIsbn());
+        dto.setGenre(loanEntity.getBookEntity().getGenre());
+        dto.setAuthor(loanEntity.getBookEntity().getAuthor());
 
         return dto;
     }
