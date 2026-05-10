@@ -1,8 +1,8 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.BookRequestDTO;
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.entity.BookEntity;
+import com.example.library.management.dto.BookRequest;
+import com.example.library.management.dto.BookResponse;
+import com.example.library.management.entity.Book;
 import com.example.library.management.repository.BookRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -10,9 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,61 +18,71 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
-public class BookService {
+public class BookService
+{
 
     private final BookRepository bookRepository;
 
     @Autowired
-    public BookService(BookRepository bookRepository){
+    public BookService(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
-    public ResponseEntity<BookResponseDTO> updateBook(Long id,BookRequestDTO bookRequestDTO) {
-        BookEntity bookEntity = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
-        int downgradedBookNumber = bookRequestDTO.getNumOfTotalCopies() - bookEntity.getNumOfTotalCopies();
+    public BookResponse create(BookRequest bookRequest) {
+        Book bookEntity = new Book();
+        bookEntity.title = bookRequest.title();
+        bookEntity.author = bookRequest.author();
+        bookEntity.isbn = bookRequest.isbn();
+        bookEntity.genre = bookRequest.genre();
+        bookEntity.numOfTotalCopies = bookRequest.numOfTotalCopies();
+        bookEntity.coverImageUrl = bookRequest.coverImageUrl();
+        bookEntity.available = true;
+        bookEntity.numOfCopiesAvailable = bookRequest.numOfCopiesAvailable();
+
+        bookEntity = bookRepository.save(bookEntity);
+        return BookResponse.fromEntity(bookEntity);
+    }
+
+    public ResponseEntity<BookResponse> updateBook(Long id, BookRequest bookRequest) {
+        Book book = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
+
+        // TODO clarify, what does this part actually do?, yb
+        int downgradedBookNumber = bookRequest.numOfCopiesAvailable() - book.numOfTotalCopies;
 
         if (downgradedBookNumber < 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "The total number of copies cannot be reduced below zero.");
+                    "The total number of copies cannot be reduced below zero."
+            );
         }
 
-        int pseudoNumOfAvailableCopy = downgradedBookNumber + bookEntity.getNumOfCopiesAvailable();
-        bookEntity.setNumOfCopiesAvailable(pseudoNumOfAvailableCopy);
-        bookEntity.setTitle(bookRequestDTO.getTitle());
-        bookEntity.setAuthor(bookRequestDTO.getAuthor());
-        bookEntity.setGenre(bookRequestDTO.getGenre());
-        bookEntity.setIsbn(bookRequestDTO.getIsbn());
-        bookEntity.setNumOfTotalCopies(bookRequestDTO.getNumOfTotalCopies());
-        bookEntity.setCoverImageUrl(bookRequestDTO.getCoverImageUrl());
+        book.numOfCopiesAvailable = downgradedBookNumber + book.numOfCopiesAvailable;
+        book.title = bookRequest.title();
+        book.author = bookRequest.author();
+        book.genre = bookRequest.genre();
+        book.isbn = bookRequest.isbn();
+        book.numOfTotalCopies = bookRequest.numOfTotalCopies();
+        book.coverImageUrl = bookRequest.coverImageUrl();
 
-        bookEntity = bookRepository.save(bookEntity);
+        book = bookRepository.save(book);
 
-        return ResponseEntity.ok(mapToDTO(bookEntity));
+        return ResponseEntity.ok(BookResponse.fromEntity(book));
     }
 
-    public BookResponseDTO create(BookRequestDTO bookRequestDTO){
-        BookEntity bookEntity = new BookEntity();
-        bookEntity.setTitle(bookRequestDTO.getTitle());
-        bookEntity.setAuthor(bookRequestDTO.getAuthor());
-        bookEntity.setIsbn(bookRequestDTO.getIsbn());
-        bookEntity.setGenre(bookRequestDTO.getGenre());
-        bookEntity.setNumOfTotalCopies(bookRequestDTO.getNumOfTotalCopies());
-        bookEntity.setCoverImageUrl(bookRequestDTO.getCoverImageUrl());
-        bookEntity.setAvailable(true);
-        bookEntity.setNumOfCopiesAvailable(bookRequestDTO.getNumOfTotalCopies());
+    public BookResponse createBook(BookRequest bookRequest, MultipartFile coverImage) {
+        var isCoverImageEmpty = coverImage == null || coverImage.isEmpty();
+        System.out.println("File empty? " + isCoverImageEmpty);
 
-        bookEntity = bookRepository.save(bookEntity);
-        return mapToDTO(bookEntity);
-    }
+        Book book = bookRequest.toEntity();
+        var coverImageUrl = "";
 
-    public BookResponseDTO createBook(BookRequestDTO bookRequestDTO, MultipartFile coverImage){
-        System.out.println("File empty? " + coverImage.isEmpty());
-        BookEntity bookEntity = mapToEntity(bookRequestDTO);
-        if (coverImage != null && !coverImage.isEmpty()) {
+        if (!isCoverImageEmpty) {
             try {
                 // Folder where images will be stored
                 String uploadDirectory = "uploads/";
@@ -108,7 +115,7 @@ public class BookService {
                 Files.copy(coverImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
                 // Save URL/path in database
-                bookEntity.setCoverImageUrl("/uploads/" + uniqueFileName);
+                coverImageUrl = "/uploads/" + uniqueFileName;
                 System.out.println("Generated URL: " + "/uploads/" + uniqueFileName);
 
             } catch (IOException e) {
@@ -117,25 +124,28 @@ public class BookService {
             }
         }
 
-// Save book in database
-        System.out.println("Book URL before save: " + bookEntity.getCoverImageUrl());
-        BookEntity savedBook = bookRepository.save(bookEntity);
-        return mapToDTO(savedBook);
+        book.coverImageUrl = coverImageUrl;
+
+        // Save book in database
+        System.out.println("Book URL before save: " + book.coverImageUrl);
+        Book savedBook = bookRepository.save(book);
+        return BookResponse.fromEntity(savedBook);
 
     }
 
-    public List<BookResponseDTO> createMultipleBooks(List<BookRequestDTO> listOfBooks){
-        List<BookEntity> books = listOfBooks.stream()
-                .map(this::mapToEntity)
+    public List<BookResponse> createMultipleBooks(List<BookRequest> listOfBooks) {
+        List<Book> books = listOfBooks.stream()
+                .map(BookRequest::toEntity)
                 .toList();
-        List<BookEntity> savedBooks = bookRepository.saveAll(books);
+
+        List<Book> savedBooks = bookRepository.saveAll(books);
 
         return savedBooks.stream()
-                .map(this::mapToDTO)
+                .map(BookResponse::fromEntity)
                 .toList();
     }
 
-    public void deleteBookById(Long id){
+    public void deleteBookById(Long id) {
         bookRepository.deleteById(id);
     }
 
@@ -146,80 +156,57 @@ public class BookService {
     }
 
     public String searchBookByTitle(String title) {
-        BookEntity bookEntity = bookRepository.findByTitle(title)
+        Book bookEntity = bookRepository.findByTitle(title)
                 .orElseThrow(() -> new NoSuchElementException("Book with title '" + title + "' not found."));
 
-        return"'" + bookEntity.getTitle()+ "'" + " is in the library and has " +
-                bookEntity.getNumOfCopiesAvailable() + " copies available.";
+        // TODO discuss: code smell? The exact response layout isn't the job of the backend, backend should rather return a structured, yb
+        //  response JSON. FE can then display it however it likes.
+        return "'" + bookEntity.title + "'" + " is in the library and has " +
+                bookEntity.numOfCopiesAvailable + " copies available.";
     }
 
-    public String viewBook(Long id){
-        List<String> recommandationsByGenreList = new ArrayList<>();
-        List<String> recommadationsByAuthorList = new ArrayList<>();
-        Optional<BookEntity> bookEntity = bookRepository.findById(id);
-        if(bookEntity.isEmpty()){
+    public String viewBook(Long id) {
+        List<String> recommendationsByGenre = new ArrayList<>();
+        List<String> recommendationsByAuthor = new ArrayList<>();
+
+        Book book = bookRepository.findById(id).orElse(null);
+        if (book == null) {
             return "Book with Id: " + id + " is not found";
         }
 
-        List<BookEntity> sameGenreBooks = bookRepository.fetchBooksByGenre(bookEntity.get().getGenre() );
-        List<BookEntity> sameAuthorBooks = bookRepository.fetchBooksByAuthorName(bookEntity.get().getAuthor());
+        List<Book> sameGenreBooks = bookRepository.fetchBooksByGenre(book.genre);
+        List<Book> sameAuthorBooks = bookRepository.fetchBooksByAuthorName(book.author);
 
-        for(BookEntity b:sameGenreBooks){
-            if(!b.getId().equals(id)){
-                recommandationsByGenreList.add(b.getTitle());
+        for (Book sameGenreBook : sameGenreBooks) {
+            var isSameBook = book.id.equals(sameGenreBook.id);
+            if (!isSameBook) {
+                recommendationsByGenre.add(sameGenreBook.title);
             }
         }
-        for(BookEntity b:sameAuthorBooks){
-            if(!b.getId().equals(id)){
-                recommadationsByAuthorList.add(b.getTitle());
+        for (Book sameAuthorBook : sameAuthorBooks) {
+            var isSameBook = book.id.equals(sameAuthorBook.id);
+            if (!isSameBook) {
+                recommendationsByAuthor.add(sameAuthorBook.title);
             }
         }
-        return "Here is the information about the book you are searching for:" + bookEntity.toString() +
-                "People who liked this genre also borrowed: " + recommandationsByGenreList +
-                " People who liked this author also borrowed: " + recommadationsByAuthorList;
+
+        // TODO same here, backend should return a structured response, frontend should display it however it likes, yb
+        return "Here is the information about the book you are searching for:" + book +
+                "People who liked this genre also borrowed: " + recommendationsByGenre +
+                " People who liked this author also borrowed: " + recommendationsByAuthor;
     }
 
-    public List<BookResponseDTO> getAllBooksSortedByAuthorAsc(){
+    public List<BookResponse> getAllBooksSortedByAuthorAsc() {
         return bookRepository.getAllBooksSortedByAuthorAsc()
                 .stream()
-                .map(this::mapToDTO)
+                .map(BookResponse::fromEntity)
                 .toList();
     }
 
-    public List<BookResponseDTO> getAllBooks(){
+    public List<BookResponse> getAllBooks() {
         return bookRepository.findAll()
                 .stream()
-                .map(this::mapToDTO)
+                .map(BookResponse::fromEntity)
                 .toList();
-    }
-
-    public BookResponseDTO mapToDTO (BookEntity bookEntity){
-        BookResponseDTO dto = new BookResponseDTO();
-
-        dto.setId(bookEntity.getId());
-        dto.setTitle(bookEntity.getTitle());
-        dto.setAuthor(bookEntity.getAuthor());
-        dto.setIsbn(bookEntity.getIsbn());
-        dto.setGenre(bookEntity.getGenre());
-        dto.setNumOfTotalCopies(bookEntity.getNumOfTotalCopies());
-        dto.setNumOfCopiesAvailable(bookEntity.getNumOfCopiesAvailable());
-        dto.setAvailable(bookEntity.isAvailable());
-        dto.setCoverImageUrl(bookEntity.getCoverImageUrl());
-
-        return dto;
-    }
-
-    private BookEntity mapToEntity(BookRequestDTO dto) {
-        BookEntity bookEntity = new BookEntity();
-
-        bookEntity.setTitle(dto.getTitle());
-        bookEntity.setAuthor(dto.getAuthor());
-        bookEntity.setIsbn(dto.getIsbn());
-        bookEntity.setGenre(dto.getGenre());
-        bookEntity.setNumOfTotalCopies(dto.getNumOfTotalCopies());
-        bookEntity.setNumOfCopiesAvailable(dto.getNumOfCopiesAvailable());
-        bookEntity.setAvailable(dto.getAvailable());
-
-        return bookEntity;
     }
 }

@@ -1,9 +1,7 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.dto.ReservationRequestDTO;
 import com.example.library.management.dto.ReservationResponseDTO;
-import com.example.library.management.entity.BookEntity;
+import com.example.library.management.entity.Book;
 import com.example.library.management.entity.ReservationEntity;
 import com.example.library.management.entity.UserEntity;
 import com.example.library.management.repository.BookRepository;
@@ -15,15 +13,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-public class ReservationService {
+public class ReservationService
+{
 
-    private ReservationRepository reservationRepository;
-    private BookRepository bookRepository;
-    private UserRepository userRepository;
+    private final ReservationRepository reservationRepository;
+    private final BookRepository bookRepository;
+    private final UserRepository userRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               BookRepository bookRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository)
+    {
         this.reservationRepository = reservationRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
@@ -44,7 +44,7 @@ public class ReservationService {
         if (exists) {
             throw new IllegalStateException
                     ("User ID with" + userId +
-                    "already has a reservation for this book.");
+                            "already has a reservation for this book.");
         }
         ReservationEntity reservationEntity = mapToEntity(userId, bookId);
         ReservationEntity savedReservation = reservationRepository.save(reservationEntity);
@@ -52,23 +52,24 @@ public class ReservationService {
         return mapToDTO(reservationEntity);
     }
 
-    public void deleteReservationById(Long reservationId){
+    public void deleteReservationById(Long reservationId) {
         reservationRepository.deleteById(reservationId);
 
     }
-    public ReservationResponseDTO mapToDTO(ReservationEntity reservationEntity){
+
+    public ReservationResponseDTO mapToDTO(ReservationEntity reservationEntity) {
 
         ReservationResponseDTO reservationResponseDTO = new ReservationResponseDTO();
 
         reservationResponseDTO.setId(reservationEntity.getId());
         reservationResponseDTO.setUserId(reservationEntity.getUserEntity().getId());
         reservationResponseDTO.setUserName(reservationEntity.getUserEntity().getName());
-        reservationResponseDTO.setBookId(reservationEntity.getBookEntity().getId());
-        reservationResponseDTO.setBookTitle(reservationEntity.getBookEntity().getTitle());
+        reservationResponseDTO.setBookId(reservationEntity.getBookEntity().id);
+        reservationResponseDTO.setBookTitle(reservationEntity.getBookEntity().title);
         reservationResponseDTO.setReservationDate(reservationEntity.getReservationDate());
-        reservationResponseDTO.setIsbn(reservationEntity.getBookEntity().getIsbn());
-        reservationResponseDTO.setAuthor(reservationEntity.getBookEntity().getAuthor());
-        reservationResponseDTO.setGenre(reservationEntity.getBookEntity().getGenre());
+        reservationResponseDTO.setIsbn(reservationEntity.getBookEntity().isbn);
+        reservationResponseDTO.setAuthor(reservationEntity.getBookEntity().author);
+        reservationResponseDTO.setGenre(reservationEntity.getBookEntity().genre);
 
         return reservationResponseDTO;
 
@@ -80,7 +81,7 @@ public class ReservationService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        BookEntity book = bookRepository.findById(bookId)
+        Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
         ReservationEntity reservationEntity = new ReservationEntity();

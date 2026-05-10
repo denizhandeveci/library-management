@@ -1,14 +1,20 @@
 package com.example.library.management.entity;
 
-import com.example.library.management.dto.ReservationRequestDTO;
-import com.example.library.management.service.ReservationService;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "reservation_entity")
-public class ReservationEntity {
+public class ReservationEntity
+{
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,9 +27,9 @@ public class ReservationEntity {
     private UserEntity userEntity;
     @ManyToOne
     @JoinColumn(name = "book_entity_id")
-    private BookEntity bookEntity;
+    private Book bookEntity;
 
-    public ReservationEntity(){
+    public ReservationEntity() {
 
     }
 
@@ -51,11 +57,11 @@ public class ReservationEntity {
         this.userEntity = userId;
     }
 
-    public BookEntity getBookId() {
+    public Book getBookId() {
         return bookEntity;
     }
 
-    public void setBookId(BookEntity bookId) {
+    public void setBookId(Book bookId) {
         this.bookEntity = bookId;
     }
 
@@ -67,11 +73,11 @@ public class ReservationEntity {
         this.userEntity = userEntity;
     }
 
-    public BookEntity getBookEntity() {
+    public Book getBookEntity() {
         return bookEntity;
     }
 
-    public void setBookEntity(BookEntity bookEntity) {
+    public void setBookEntity(Book bookEntity) {
         this.bookEntity = bookEntity;
     }
 }

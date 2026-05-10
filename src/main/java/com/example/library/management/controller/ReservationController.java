@@ -1,9 +1,6 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.dto.ReservationRequestDTO;
 import com.example.library.management.dto.ReservationResponseDTO;
-import com.example.library.management.entity.ReservationEntity;
 import com.example.library.management.service.ReservationService;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,6 +1,5 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.BookResponseDTO;
 import com.example.library.management.dto.UserRequestDTO;
 import com.example.library.management.dto.UserResponseDTO;
 import com.example.library.management.entity.UserEntity;
@@ -9,7 +8,6 @@ import com.example.library.management.repository.LoanRepository;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

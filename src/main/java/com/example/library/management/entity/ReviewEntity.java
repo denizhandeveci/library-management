@@ -1,11 +1,18 @@
 package com.example.library.management.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDateTime;
 
 @Entity
-public class ReviewEntity {
+public class ReviewEntity
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,13 +21,13 @@ public class ReviewEntity {
     private String comment;
     @ManyToOne
     @JoinColumn(name = "book-entity-id")
-    private BookEntity bookEntity;
+    private Book bookEntity;
     @ManyToOne
     @JoinColumn(name = "user-entity-id")
     private UserEntity userEntity;
     private LocalDateTime createdAt;
 
-    public ReviewEntity(int rating, String comment, BookEntity bookEntity, UserEntity userEntity, LocalDateTime createdAt) {
+    public ReviewEntity(int rating, String comment, Book bookEntity, UserEntity userEntity, LocalDateTime createdAt) {
         this.rating = rating;
         this.comment = comment;
         this.bookEntity = bookEntity;
@@ -55,11 +62,11 @@ public class ReviewEntity {
         this.comment = comment;
     }
 
-    public BookEntity getBookEntity() {
+    public Book getBookEntity() {
         return bookEntity;
     }
 
-    public void setBookEntity(BookEntity bookEntity) {
+    public void setBookEntity(Book bookEntity) {
         this.bookEntity = bookEntity;
     }
 
@@ -84,7 +91,7 @@ public class ReviewEntity {
         return "ReviewEntity{" +
                 "rating=" + rating +
                 ", comment='" + comment + '\'' +
-                ", bookEntity=" + bookEntity.getTitle() +
+                ", bookEntity=" + bookEntity.title +
                 ", userEntity=" + userEntity.getName() +
                 ", createdAt=" + createdAt +
                 '}';

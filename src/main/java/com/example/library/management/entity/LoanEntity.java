@@ -3,7 +3,6 @@ package com.example.library.management.entity;
 import jakarta.persistence.*;
 
 
-import java.awt.print.Book;
 import java.time.LocalDate;
 
 @Entity
@@ -16,7 +15,7 @@ public class LoanEntity {
 
     @ManyToOne
     @JoinColumn(name = "book_entity_id")
-    private BookEntity bookEntity;
+    private Book bookEntity;
     @ManyToOne
     private UserEntity userEntity;
 
@@ -29,7 +28,7 @@ public class LoanEntity {
     @Column(name="is_returned")
     private boolean isReturned = false;
 
-    public LoanEntity(BookEntity bookEntity, UserEntity userEntity, LocalDate loanDate, LocalDate dueDate, boolean isReturned, LocalDate returnDate) {
+    public LoanEntity(Book bookEntity, UserEntity userEntity, LocalDate loanDate, LocalDate dueDate, boolean isReturned, LocalDate returnDate) {
         this.bookEntity = bookEntity;
         this.userEntity = userEntity;
         this.loanDate = loanDate;
@@ -50,11 +49,11 @@ public class LoanEntity {
         this.id = id;
     }
 
-    public BookEntity getBookEntity() {
+    public Book getBookEntity() {
         return bookEntity;
     }
 
-    public void setBookEntity(BookEntity bookEntity) {
+    public void setBookEntity(Book bookEntity) {
         this.bookEntity = bookEntity;
     }
 

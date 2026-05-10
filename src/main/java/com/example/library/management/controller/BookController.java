@@ -1,17 +1,13 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.BookRequestDTO;
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.entity.BookEntity;
-import com.example.library.management.repository.BookRepository;
+import com.example.library.management.dto.BookRequest;
+import com.example.library.management.dto.BookResponse;
 import com.example.library.management.service.BookService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.print.Book;
 import java.util.List;
 
 @RestController
@@ -30,25 +26,26 @@ public class BookController {
 //    }
     @PutMapping("/update-book/{id}")
     @Transactional
-    public ResponseEntity<BookResponseDTO> updateBook(@PathVariable("id") Long id, @RequestBody BookRequestDTO bookRequestDTO){
+    public ResponseEntity<BookResponse> updateBook(@PathVariable Long id, @RequestBody BookRequest bookRequestDTO){
         return bookService.updateBook(id, bookRequestDTO);
     }
 
     @PostMapping(value = "/create-book")
-    public ResponseEntity<BookResponseDTO> createBook(@RequestBody BookRequestDTO bookRequestDTO)  {
+    public ResponseEntity<BookResponse> createBook(@RequestBody BookRequest bookRequest)  {
 
-        BookResponseDTO saved = bookService.create(bookRequestDTO);
+        BookResponse saved = bookService.create(bookRequest);
 
         return ResponseEntity.ok(saved);
     }
     @PostMapping("/create-multiple-books")
-    public List<BookResponseDTO> createMultipleBooks(@RequestBody List<BookRequestDTO> listOfBooks){
+    public List<BookResponse> createMultipleBooks(@RequestBody List<BookRequest> listOfBooks){
         return bookService.createMultipleBooks(listOfBooks);
     }
     @DeleteMapping("/delete-book-by-id/{id}")
     public void deleteBookById(@PathVariable Long id){
         bookService.deleteBookById(id);
     }
+
     @PostMapping("/reset-library")
     public String deleteAllBooksAndResetAutoIncrement(){
         bookService.deleteAllBooksAndResetAutoIncrement();
@@ -59,18 +56,19 @@ public class BookController {
     public String searchBookByTitle(@PathVariable  String title){
         return bookService.searchBookByTitle(title);
     }
+
     @GetMapping("/view-book/{id}")
     public String viewBook(@PathVariable Long id){
         return bookService.viewBook(id);
     }
 
     @GetMapping("/get-all-books-asc")
-    public List<BookResponseDTO> getAllBooksSortedByAuthorAsc() {
+    public List<BookResponse> getAllBooksSortedByAuthorAsc() {
         return bookService.getAllBooksSortedByAuthorAsc();
     }
 
     @GetMapping("/get-all-books")
-    public List<BookResponseDTO> getAllBooks(){
+    public List<BookResponse> getAllBooks(){
         return bookService.getAllBooks();
     }
 
