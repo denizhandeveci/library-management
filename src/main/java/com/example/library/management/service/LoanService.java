@@ -79,6 +79,7 @@ public class LoanService
         }
 
         book.numOfCopiesAvailable -= 1;
+        bookRepository.save(book);
 
         Loan loanEntity = createLoanEntity(book, user);
         Loan savedLoan = loanRepository.save(loanEntity);
