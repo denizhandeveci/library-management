@@ -15,37 +15,38 @@ import java.util.List;
 @Table(name = "book")
 public class Book
 {
-    @Column
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     public Long id;
 
-    @Column
+    @Column(name = "title")
     public String title;
 
-    @Column
+    @Column(name = "num_of_total_copies")
     public Integer numOfTotalCopies;
 
-    @Column
+    @Column(name = "num_of_copies_available")
     public Integer numOfCopiesAvailable;
 
-    @Column
+    @Column(name = "author")
     public String author;
 
-    @Column
+    @Column(name = "isbn", unique = true)
     public String isbn;
 
-    @Column
+    @Column(name = "genre")
     public String genre;
 
-    @Column
+    @Column(name = "available")
     public Boolean available;
 
-    @Column
+    @Column(name = "cover_image_url")
     public String coverImageUrl;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<Loan> loans;
+
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<Reservation> reservations;
 

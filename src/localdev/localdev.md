@@ -10,7 +10,6 @@ to create or replace localdev db (containerized), run:
         -e MYSQL_ROOT_PASSWORD='4815162342bd.' \
         -e MYSQL_DATABASE=library_management \
         -p 3306:3306 \
-        -v deveci-mysql-data:/var/lib/mysql \
         -d docker.io/library/mysql:8.0
 
 to stop a running container:

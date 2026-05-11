@@ -32,8 +32,8 @@ public record ReviewResponse(
                 book.id,
                 book.title,
 
-                user.getId(),
-                user.getName(),
+                user.id,
+                user.name,
 
                 review.createdAt
         );

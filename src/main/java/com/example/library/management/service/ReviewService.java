@@ -4,7 +4,7 @@ import com.example.library.management.dto.ReviewRequest;
 import com.example.library.management.dto.ReviewResponse;
 import com.example.library.management.entity.Book;
 import com.example.library.management.entity.Review;
-import com.example.library.management.entity.UserEntity;
+import com.example.library.management.entity.User;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
@@ -33,7 +33,7 @@ public class ReviewService
         Book book = bookRepository.findById(reviewRequest.bookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        UserEntity user = userRepository.findById(reviewRequest.userId())
+        User user = userRepository.findById(reviewRequest.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Review savedReview = reviewRepository.save(createReviewEntity(book, user, reviewRequest));
@@ -46,7 +46,7 @@ public class ReviewService
                 .map(reviewRequest -> {
                     Book book = bookRepository.findById(reviewRequest.bookId())
                             .orElseThrow(() -> new RuntimeException("Book not found"));
-                    UserEntity user = userRepository.findById(reviewRequest.userId())
+                    User user = userRepository.findById(reviewRequest.userId())
                             .orElseThrow(() -> new RuntimeException("User not found"));
 
                     return createReviewEntity(book, user, reviewRequest);
@@ -103,7 +103,7 @@ public class ReviewService
         reviewRepository.resetAutoIncrement();
     }
 
-    public Review createReviewEntity(Book book, UserEntity user, ReviewRequest reviewRequest) {
+    public Review createReviewEntity(Book book, User user, ReviewRequest reviewRequest) {
         Review reviewEntity = new Review();
 
         reviewEntity.rating = reviewRequest.rating();

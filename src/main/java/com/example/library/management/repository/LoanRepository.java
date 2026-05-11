@@ -13,7 +13,6 @@ public interface LoanRepository extends JpaRepository<Loan,Long> {
     // This query simply finds loan by user and book which is currently not returned and still and active loan
     Optional<Loan> findByUserIdAndBookIdAndIsReturnedFalse(Long userId, Long bookId);
 
-
     boolean existsByBookIdAndUserIdAndIsReturnedFalse(Long bookId, Long userId);
 
     List<Loan> findAllByUserIdAndIsReturnedFalse(Long userId);

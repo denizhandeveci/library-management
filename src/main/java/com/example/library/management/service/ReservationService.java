@@ -3,7 +3,7 @@ package com.example.library.management.service;
 import com.example.library.management.dto.ReservationResponse;
 import com.example.library.management.entity.Book;
 import com.example.library.management.entity.Reservation;
-import com.example.library.management.entity.UserEntity;
+import com.example.library.management.entity.User;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.ReservationRepository;
 import com.example.library.management.repository.UserRepository;
@@ -37,13 +37,13 @@ public class ReservationService
     }
 
     public ReservationResponse makeReservation(Long userId, Long bookId) {
-        UserEntity user = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        boolean reservationExists = reservationRepository.existsByBookIdAndUserId(book.id, user.getId());
+        boolean reservationExists = reservationRepository.existsByBookIdAndUserId(book.id, user.id);
         if (reservationExists) {
             throw new IllegalStateException("User ID with" + userId + "already has a reservation for this book.");
         }
@@ -58,7 +58,7 @@ public class ReservationService
 
     }
 
-    public Reservation createReservationEntity(UserEntity user, Book book) {
+    public Reservation createReservationEntity(User user, Book book) {
         Reservation reservationEntity = new Reservation();
 
         reservationEntity.user = user;

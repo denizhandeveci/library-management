@@ -36,8 +36,8 @@ public record LoanResponse(
                 book.genre,
                 book.isbn,
 
-                user.getId(),
-                user.getName(),
+                user.id,
+                user.name,
 
                 loan.loanDate,
                 loan.dueDate,

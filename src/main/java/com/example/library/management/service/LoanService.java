@@ -6,7 +6,7 @@ import com.example.library.management.dto.ReservationRequest;
 import com.example.library.management.entity.Book;
 import com.example.library.management.entity.Loan;
 import com.example.library.management.entity.Reservation;
-import com.example.library.management.entity.UserEntity;
+import com.example.library.management.entity.User;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.LoanRepository;
 import com.example.library.management.repository.ReservationRepository;
@@ -54,19 +54,19 @@ public class LoanService
         Book book = bookRepository.findById(loanRequest.bookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        UserEntity user = userRepository.findById(loanRequest.userId())
+        User user = userRepository.findById(loanRequest.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
 
-        boolean loanedAndNotReturned = loanRepository.existsByBookIdAndUserIdAndIsReturnedFalse(book.id, user.getId());
+        boolean loanedAndNotReturned = loanRepository.existsByBookIdAndUserIdAndIsReturnedFalse(book.id, user.id);
         if (loanedAndNotReturned) {
-            throw new IllegalStateException("User with ID " + user.getId() + " has already loaned this book and not returned it yet.");
+            throw new IllegalStateException("User with ID " + user.id + " has already loaned this book and not returned it yet.");
         }
 
 
         if (!book.available) {
             ReservationRequest reservationRequest = new ReservationRequest(
-                    user.getId(),
+                    user.id,
                     book.id
             );
 
@@ -116,7 +116,7 @@ public class LoanService
             Reservation reservationEntity = oldestReservation.get();
 
             // here off of the oldest reservation I grab the userId and the id of the reservation
-            Long reservedUserId = reservationEntity.user.getId();
+            Long reservedUserId = reservationEntity.user.id;
 
             // here I call the createLoan function I defined previously to create a loan
             LoanRequest dto = new LoanRequest(
@@ -131,7 +131,7 @@ public class LoanService
         loanRepository.save(loan);
     }
 
-    public Loan createLoanEntity(Book book, UserEntity user) {
+    public Loan createLoanEntity(Book book, User user) {
         Loan loan = new Loan();
 
         loan.book = book;

@@ -25,7 +25,7 @@ public class Loan
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    public UserEntity user;
+    public User user;
 
     @Column(name = "loan_date")
     public LocalDate loanDate;

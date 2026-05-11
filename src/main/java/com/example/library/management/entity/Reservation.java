@@ -25,7 +25,7 @@ public class Reservation
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    public UserEntity user;
+    public User user;
 
     @ManyToOne
     @JoinColumn(name = "book_id")

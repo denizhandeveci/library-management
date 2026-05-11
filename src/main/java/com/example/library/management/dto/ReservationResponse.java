@@ -30,8 +30,8 @@ public record ReservationResponse(
                 book.genre,
                 book.isbn,
 
-                user.getId(),
-                user.getName(),
+                user.id,
+                user.name,
 
                 reservation.reservationDate
         );

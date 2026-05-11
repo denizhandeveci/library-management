@@ -26,7 +26,7 @@ public class Review
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    public UserEntity user;
+    public User user;
 
     @Column(name = "rating")
     public int rating;
@@ -44,7 +44,7 @@ public class Review
                 "rating=" + rating +
                 ", comment='" + comment + '\'' +
                 ", bookEntity=" + book.title +
-                ", userEntity=" + user.getName() +
+                ", userEntity=" + user.name +
                 ", createdAt=" + createdAt +
                 '}';
     }
