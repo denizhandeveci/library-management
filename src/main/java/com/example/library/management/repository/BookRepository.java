@@ -18,22 +18,21 @@ public interface BookRepository extends JpaRepository<Book, Long>
     @Query(value = "ALTER TABLE books AUTO_INCREMENT = 1", nativeQuery = true)
     void resetAutoIncrement();
 
-    Optional<Book> findByTitle(String title);
-
     @Query("""             
             SELECT b
-            FROM Book  b
+            FROM Book b
             WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%') )
+                AND b.deleted is null
             """
     )
     List<Book> searchByTitle(@Param("title") String title, Sort sort);
 
-    @Query("SELECT b FROM Book b WHERE b.genre = :genre")
+    @Query("SELECT b FROM Book b WHERE b.genre = :genre AND b.deleted is NULL")
     List<Book> findByGenre(@Param("genre") String genre);
 
-    @Query("SELECT b FROM Book b WHERE b.author = :author")
+    @Query("SELECT b FROM Book b WHERE b.author = :author AND b.deleted is NULL")
     List<Book> findByAuthor(@Param("author") String author);
 
-    @Query("SELECT b FROM Book b")
+    @Query("SELECT b FROM Book b WHERE b.deleted is NULL")
     List<Book> findAllSorted(Sort sort);
 }
