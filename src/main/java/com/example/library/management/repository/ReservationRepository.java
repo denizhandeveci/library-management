@@ -1,19 +1,47 @@
 package com.example.library.management.repository;
 
 import com.example.library.management.entity.Reservation;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface ReservationRepository extends JpaRepository<Reservation,Long> {
+public interface ReservationRepository extends JpaRepository<Reservation, Long>
+{
 
-    Optional<Reservation> findFirstByBookIdOrderByIdAsc(Long bookId);
+    @Query("""
+            SELECT r
+            FROM Reservation r
+            WHERE r.book.id = :bookId
+                AND r.deleted is NULL
+            ORDER BY r.reservationDate ASC, r.id ASC
+            """)
+    List<Reservation> findActiveReservationsByBookId(
+            @Param("bookId") Long bookId,
+            Pageable pageable
+    );
 
-    //checks if a reservation exists by the same book and same user
-    boolean existsByBookIdAndUserId(Long bookId, Long userId);
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Reservation r
+            WHERE r.book.id = :bookId
+                AND r.user.id = :userId
+                AND r.deleted is NULL
+            """)
+    boolean existsByBookIdAndUserId(
+            @Param("bookId") Long bookId,
+            @Param("userId") Long userId
+    );
 
-    List<Reservation> findAllByUserId(Long userId);
+    @Query("""
+            SELECT r
+            FROM Reservation r
+            WHERE r.user.id = :userId
+                AND r.deleted is NULL
+            """)
+    List<Reservation> findAllByUserId(@Param("userId") Long userId);
 }

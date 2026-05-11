@@ -12,16 +12,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class AdminService
 {
-    private final com.example.library.management.repository.AdminRepository AdminRepository;
     private final AdminRepository adminRepository;
 
     @Autowired
-    public AdminService(
-            AdminRepository AdminRepository,
-            AdminRepository adminRepository
-    )
+    public AdminService(AdminRepository adminRepository)
     {
-        this.AdminRepository = AdminRepository;
         this.adminRepository = adminRepository;
     }
 
@@ -35,12 +30,12 @@ public class AdminService
     }
 
     public AdminResponse createAdmin(AdminRequest adminRequest) {
-        if (AdminRepository.existsByEmail(adminRequest.email())) {
+        if (adminRepository.existsByEmail(adminRequest.email())) {
             // TODO interceptor or graceful handling, yb
             throw new RuntimeException("This email address has already been used. Please use another email address.");
         }
 
-        Admin savedAdmin = AdminRepository.save(adminRequest.toEntity());
+        Admin savedAdmin = adminRepository.save(adminRequest.toEntity());
 
         return AdminResponse.fromEntity(savedAdmin);
     }

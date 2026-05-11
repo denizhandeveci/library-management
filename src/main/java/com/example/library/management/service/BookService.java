@@ -172,8 +172,12 @@ public class BookService
         return BookResponse.fromEntity(book);
     }
 
-    public void deleteBook(Long id) {
-        bookRepository.deleteById(id);
+    @Transactional
+    public void softDeleteBook(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + id));
+
+        book.softDelete();
     }
 
     @Transactional

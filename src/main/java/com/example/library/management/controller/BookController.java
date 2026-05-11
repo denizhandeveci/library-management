@@ -66,7 +66,7 @@ public class BookController
 
     @DeleteMapping("/books/{bookId}")
     public ResponseEntity<Void> deleteBookById(@PathVariable Long bookId) {
-        bookService.deleteBook(bookId);
+        bookService.softDeleteBook(bookId);
 
         return ResponseEntity.noContent().build();
     }
