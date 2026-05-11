@@ -26,8 +26,8 @@ public class UserEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Loan> loans;
-    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL)
-    private List<ReservationEntity> reservations;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Reservation> reservations;
     public UserEntity( String name, String email, String phoneNumber, String address, String password) {
         this.name = name;
         this.email = email;

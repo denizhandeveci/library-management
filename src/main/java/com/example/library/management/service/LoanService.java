@@ -5,7 +5,7 @@ import com.example.library.management.dto.LoanResponse;
 import com.example.library.management.dto.ReservationRequest;
 import com.example.library.management.entity.Book;
 import com.example.library.management.entity.Loan;
-import com.example.library.management.entity.ReservationEntity;
+import com.example.library.management.entity.Reservation;
 import com.example.library.management.entity.UserEntity;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.LoanRepository;
@@ -108,15 +108,15 @@ public class LoanService
         // Here I write a query to find the oldest reservation
         // in other words, if multiple reservations are created by separate users for the same book
         // once the book is available again, the first user that reserved the book will be able to loan it.
-        Optional<ReservationEntity> oldestReservation =
-                reservationRepository.findFirstByBookEntityIdOrderByIdAsc(bookId);
+        Optional<Reservation> oldestReservation =
+                reservationRepository.findFirstByBookIdOrderByIdAsc(bookId);
         // Here is a simple if statement where I check if someone is waiting for this book
         // if yes, then I grab that reservation
         if (oldestReservation.isPresent()) {
-            ReservationEntity reservationEntity = oldestReservation.get();
+            Reservation reservationEntity = oldestReservation.get();
 
             // here off of the oldest reservation I grab the userId and the id of the reservation
-            Long reservedUserId = reservationEntity.getUserId().getId();
+            Long reservedUserId = reservationEntity.user.getId();
 
             // here I call the createLoan function I defined previously to create a loan
             LoanRequest dto = new LoanRequest(

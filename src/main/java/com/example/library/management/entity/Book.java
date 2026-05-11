@@ -46,8 +46,8 @@ public class Book
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<Loan> loans;
-    @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<ReservationEntity> reservations;
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<Reservation> reservations;
 
     // Required for JPA
     public Book() {}
