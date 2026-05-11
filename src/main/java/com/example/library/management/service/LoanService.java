@@ -64,7 +64,7 @@ public class LoanService
         }
 
 
-        if (!book.available) {
+        if (!book.isAvailable()) {
             ReservationRequest reservationRequest = new ReservationRequest(
                     user.id,
                     book.id
@@ -77,7 +77,6 @@ public class LoanService
         }
 
         book.numOfCopiesAvailable -= 1;
-        book.available = book.numOfCopiesAvailable > 0;
 
         Loan loanEntity = createLoanEntity(book, user);
         Loan savedLoan = loanRepository.save(loanEntity);
@@ -101,7 +100,6 @@ public class LoanService
 
         Book bookEntity = loan.book;
 
-        bookEntity.available = true;
         bookEntity.numOfCopiesAvailable += 1;
 
         //bookRepository.save(bookEntity);
