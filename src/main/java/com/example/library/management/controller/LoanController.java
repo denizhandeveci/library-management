@@ -1,8 +1,7 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.LoanRequestDTO;
-import com.example.library.management.dto.LoanResponseDTO;
-import com.example.library.management.entity.LoanEntity;
+import com.example.library.management.dto.LoanRequest;
+import com.example.library.management.dto.LoanResponse;
 import com.example.library.management.service.LoanService;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,11 +17,14 @@ public class LoanController {
     }
 
     @PostMapping("/create-loan-userId-bookId/{userId}/{bookId}")
-    public LoanResponseDTO createLoan(@PathVariable Long userId,
-                                      @PathVariable Long bookId){
-        LoanRequestDTO loanRequestDTO = new LoanRequestDTO();
-        loanRequestDTO.setUserId(userId);
-        loanRequestDTO.setBookId(bookId);
+    public LoanResponse createLoan(@PathVariable Long userId,
+                                   @PathVariable Long bookId){
+
+        // TODO clarify/discuss: should be refactored to accept the request in the body?, yb
+        LoanRequest loanRequestDTO = new LoanRequest(
+                userId,
+                bookId
+        );
         return loanService.createLoan(loanRequestDTO);
     }
 
@@ -32,7 +34,7 @@ public class LoanController {
     }
 
     @GetMapping("/get-loans/{userId}")
-    public List<LoanResponseDTO> getLoans(@PathVariable Long userId) {
+    public List<LoanResponse> getLoans(@PathVariable Long userId) {
         return loanService.findAllLoans(userId);
     }
 

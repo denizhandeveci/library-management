@@ -1,11 +1,9 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.dto.ReservationRequestDTO;
-import com.example.library.management.dto.ReservationResponseDTO;
-import com.example.library.management.entity.BookEntity;
-import com.example.library.management.entity.ReservationEntity;
-import com.example.library.management.entity.UserEntity;
+import com.example.library.management.dto.ReservationResponse;
+import com.example.library.management.entity.Book;
+import com.example.library.management.entity.Reservation;
+import com.example.library.management.entity.User;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.ReservationRepository;
 import com.example.library.management.repository.UserRepository;
@@ -15,79 +13,58 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-public class ReservationService {
+public class ReservationService
+{
 
-    private ReservationRepository reservationRepository;
-    private BookRepository bookRepository;
-    private UserRepository userRepository;
+    private final ReservationRepository reservationRepository;
+    private final BookRepository bookRepository;
+    private final UserRepository userRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               BookRepository bookRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository)
+    {
         this.reservationRepository = reservationRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
     }
 
-    public List<ReservationResponseDTO> getAllReservations(Long userId) {
-        return reservationRepository.findAllByUserEntityId(userId)
+    public List<ReservationResponse> getAllReservations(Long userId) {
+        return reservationRepository.findAllByUserId(userId)
                 .stream()
-                .map(this::mapToDTO)
+                .map(ReservationResponse::fromEntity)
                 .toList();
     }
 
-    public ReservationResponseDTO makeReservation(Long userId, Long bookId) {
+    public ReservationResponse makeReservation(Long userId, Long bookId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean exists = reservationRepository
-                .existsByBookEntityIdAndUserEntityId(bookId, userId);
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        if (exists) {
-            throw new IllegalStateException
-                    ("User ID with" + userId +
-                    "already has a reservation for this book.");
+        boolean reservationExists = reservationRepository.existsByBookIdAndUserId(book.id, user.id);
+        if (reservationExists) {
+            throw new IllegalStateException("User ID with" + userId + "already has a reservation for this book.");
         }
-        ReservationEntity reservationEntity = mapToEntity(userId, bookId);
-        ReservationEntity savedReservation = reservationRepository.save(reservationEntity);
 
-        return mapToDTO(reservationEntity);
+        Reservation savedReservation = reservationRepository.save(createReservationEntity(user, book));
+
+        return ReservationResponse.fromEntity(savedReservation);
     }
 
-    public void deleteReservationById(Long reservationId){
+    public void deleteReservationById(Long reservationId) {
         reservationRepository.deleteById(reservationId);
 
     }
-    public ReservationResponseDTO mapToDTO(ReservationEntity reservationEntity){
 
-        ReservationResponseDTO reservationResponseDTO = new ReservationResponseDTO();
+    public Reservation createReservationEntity(User user, Book book) {
+        Reservation reservationEntity = new Reservation();
 
-        reservationResponseDTO.setId(reservationEntity.getId());
-        reservationResponseDTO.setUserId(reservationEntity.getUserEntity().getId());
-        reservationResponseDTO.setUserName(reservationEntity.getUserEntity().getName());
-        reservationResponseDTO.setBookId(reservationEntity.getBookEntity().getId());
-        reservationResponseDTO.setBookTitle(reservationEntity.getBookEntity().getTitle());
-        reservationResponseDTO.setReservationDate(reservationEntity.getReservationDate());
-        reservationResponseDTO.setIsbn(reservationEntity.getBookEntity().getIsbn());
-        reservationResponseDTO.setAuthor(reservationEntity.getBookEntity().getAuthor());
-        reservationResponseDTO.setGenre(reservationEntity.getBookEntity().getGenre());
+        reservationEntity.user = user;
+        reservationEntity.book = book;
 
-        return reservationResponseDTO;
-
-    }
-
-
-    public ReservationEntity mapToEntity(Long userId, Long bookId) {
-
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        BookEntity book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
-
-        ReservationEntity reservationEntity = new ReservationEntity();
-
-        reservationEntity.setUserId(user);
-        reservationEntity.setBookId(book);
-        reservationEntity.setReservationDate(LocalDate.now());
+        reservationEntity.reservationDate = LocalDate.now();
 
         return reservationEntity;
     }

@@ -1,8 +1,7 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.ReviewRequestDTO;
-import com.example.library.management.dto.ReviewResponseDTO;
-import com.example.library.management.entity.ReviewEntity;
+import com.example.library.management.dto.ReviewRequest;
+import com.example.library.management.dto.ReviewResponse;
 import com.example.library.management.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,15 +18,15 @@ public class ReviewController {
     }
 
     @PostMapping("/add-review")
-    public ReviewResponseDTO addReview(@RequestBody ReviewRequestDTO reviewRequestDTO){
+    public ReviewResponse addReview(@RequestBody ReviewRequest reviewRequestDTO){
         return reviewService.addReview(reviewRequestDTO);
     }
     @PostMapping("/add-multiple-reviews")
-    public List<ReviewResponseDTO> addMultipleReviews(@RequestBody List<ReviewRequestDTO> reviewRequestDTOList){
+    public List<ReviewResponse> addMultipleReviews(@RequestBody List<ReviewRequest> reviewRequestDTOList){
         return reviewService.addMultipleReviews(reviewRequestDTOList);
     }
     @GetMapping("/get-reviews/{bookId}")
-    public List<ReviewResponseDTO> getReviewsForBook(@PathVariable Long bookId){
+    public List<ReviewResponse> getReviewsForBook(@PathVariable Long bookId){
         return reviewService.getReviewsForBook(bookId);
     }
     @GetMapping("/get-average-rating/{bookId}")

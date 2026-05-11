@@ -1,11 +1,8 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.dto.UserRequestDTO;
-import com.example.library.management.dto.UserResponseDTO;
-import com.example.library.management.entity.UserEntity;
+import com.example.library.management.dto.UserRequest;
+import com.example.library.management.dto.UserResponse;
 import com.example.library.management.service.UserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +18,7 @@ public class UserController {
     }
 
     @PostMapping("/create-user")
-    public UserResponseDTO createUser(@RequestBody UserRequestDTO userRequestDTO) {
+    public UserResponse createUser(@RequestBody UserRequest userRequestDTO) {
         return userService.createUser(userRequestDTO);
     }
 
@@ -31,12 +28,12 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponseDTO> loginUser(@RequestBody UserRequestDTO loginDto) {
-        return userService.getUser(loginDto.getEmail(), loginDto.getPassword());
+    public ResponseEntity<UserResponse> loginUser(@RequestBody UserRequest loginDto) {
+        return userService.getUser(loginDto.email(), loginDto.password());
     }
 
     @GetMapping("/get-all-users")
-    public List<UserResponseDTO> getAllUsers(){
+    public List<UserResponse> getAllUsers(){
         return userService.getAllUsers();
     }
 

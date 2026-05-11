@@ -1,15 +1,11 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.BookResponseDTO;
-import com.example.library.management.dto.UserRequestDTO;
-import com.example.library.management.dto.UserResponseDTO;
-import com.example.library.management.entity.UserEntity;
-import com.example.library.management.repository.BookRepository;
-import com.example.library.management.repository.LoanRepository;
+import com.example.library.management.dto.UserRequest;
+import com.example.library.management.dto.UserResponse;
+import com.example.library.management.entity.User;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,80 +14,53 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UserService {
+public class UserService
+{
     private final UserRepository userRepository;
-    private final BookRepository bookRepository;
-    private final LoanRepository loanRepository;
     private final ReviewRepository reviewRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository,
-                       BookRepository bookRepository,
-                       LoanRepository loanRepository,
-                       ReviewRepository reviewRepository){
+    public UserService(
+            UserRepository userRepository,
+            ReviewRepository reviewRepository
+    )
+    {
         this.userRepository = userRepository;
-        this.bookRepository = bookRepository;
-        this.loanRepository = loanRepository;
         this.reviewRepository = reviewRepository;
     }
 
-    public UserResponseDTO createUser(UserRequestDTO userRequestDTO){
-        if(userRepository.existsByEmail(userRequestDTO.getEmail())){
+    public UserResponse createUser(UserRequest userRequest) {
+        if (userRepository.existsByEmail(userRequest.email())) {
             throw new RuntimeException("This email address has already been used. Please use another email address.");
         }
-        UserEntity userEntity = mapToEntity(userRequestDTO);
-        UserEntity savedUser = userRepository.save(userEntity);
+        User savedUser = userRepository.save(userRequest.toEntity());
 
-        return mapToDTO(savedUser);
+        return UserResponse.fromEntity(savedUser);
     }
 
     @Transactional
-    public void deleteUser(Long userId){
-        UserEntity userEntity = userRepository.findById(userId).orElseThrow();
+    public void deleteUser(Long userId) {
+        User userEntity = userRepository.findById(userId).orElseThrow();
         userRepository.delete(userEntity);
         reviewRepository.deleteByUserId(userId);
 
 
     }
 
-    public ResponseEntity<UserResponseDTO> getUser(String email, String password){
+    public ResponseEntity<UserResponse> getUser(String email, String password) {
 
-        if(userRepository.findByEmailAndPassword(email, password).isPresent()){
-            return ResponseEntity.ok(mapToDTO(userRepository.findByEmailAndPassword(email, password).get()));
-        };
+        User user = userRepository.findByEmailAndPassword(email, password).orElse(null);
+        if (user != null) {
+            return ResponseEntity.ok(UserResponse.fromEntity(user));
+        }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    public List<UserResponseDTO> getAllUsers(){
+    public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(this::mapToDTO)
+                .map(UserResponse::fromEntity)
                 .toList();
     }
-
-    public UserEntity mapToEntity(UserRequestDTO userRequestDTO){
-        UserEntity userEntity = new UserEntity();
-
-        userEntity.setName(userRequestDTO.getName());
-        userEntity.setEmail(userRequestDTO.getEmail());
-        userEntity.setPhoneNumber(userRequestDTO.getPhoneNumber());
-        userEntity.setAddress(userRequestDTO.getAddress());
-        userEntity.setPassword(userRequestDTO.getPassword());
-
-        return userEntity;
-    }
-
-    public UserResponseDTO mapToDTO(UserEntity userEntity){
-        UserResponseDTO userResponseDTO = new UserResponseDTO();
-
-        userResponseDTO.setId(userEntity.getId());
-        userResponseDTO.setName(userEntity.getName());
-        userResponseDTO.setEmail(userEntity.getEmail());
-        userResponseDTO.setAddress(userEntity.getAddress());
-        userResponseDTO.setPhoneNumber(userEntity.getPhoneNumber());
-
-        return userResponseDTO;
-    }
-
 }

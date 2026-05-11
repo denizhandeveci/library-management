@@ -1,10 +1,10 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.ReviewRequestDTO;
-import com.example.library.management.dto.ReviewResponseDTO;
-import com.example.library.management.entity.BookEntity;
-import com.example.library.management.entity.ReviewEntity;
-import com.example.library.management.entity.UserEntity;
+import com.example.library.management.dto.ReviewRequest;
+import com.example.library.management.dto.ReviewResponse;
+import com.example.library.management.entity.Book;
+import com.example.library.management.entity.Review;
+import com.example.library.management.entity.User;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
@@ -13,12 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-public class ReviewService {
+public class ReviewService
+{
     private final ReviewRepository reviewRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
@@ -30,87 +29,90 @@ public class ReviewService {
         this.userRepository = userRepository;
     }
 
-    public ReviewResponseDTO addReview(ReviewRequestDTO reviewRequestDTO) {
-        ReviewEntity reviewEntity = mapTOEntity(reviewRequestDTO);
-        ReviewEntity savedReview = reviewRepository.save(reviewEntity);
-        return mapToDTO(savedReview);
+    public ReviewResponse addReview(ReviewRequest reviewRequest) {
+        Book book = bookRepository.findById(reviewRequest.bookId())
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        User user = userRepository.findById(reviewRequest.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Review savedReview = reviewRepository.save(createReviewEntity(book, user, reviewRequest));
+
+        return ReviewResponse.fromEntity(savedReview);
     }
-    public List<ReviewResponseDTO> addMultipleReviews(List<ReviewRequestDTO> reviewRequestDTOList){
-        List<ReviewEntity> reviewEntityList = reviewRequestDTOList.stream()
-                .map(this::mapTOEntity)
+
+    public List<ReviewResponse> addMultipleReviews(List<ReviewRequest> reviewRequests) {
+        List<Review> reviews = reviewRequests.stream()
+                .map(reviewRequest -> {
+                    Book book = bookRepository.findById(reviewRequest.bookId())
+                            .orElseThrow(() -> new RuntimeException("Book not found"));
+                    User user = userRepository.findById(reviewRequest.userId())
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+
+                    return createReviewEntity(book, user, reviewRequest);
+                })
                 .toList();
-        List<ReviewEntity> savedReviews = reviewRepository.saveAll(reviewEntityList);
+
+        List<Review> savedReviews = reviewRepository.saveAll(reviews);
+
         return savedReviews.stream()
-                .map(this::mapToDTO)
+                .map(ReviewResponse::fromEntity)
                 .toList();
     }
 
-    public List<ReviewResponseDTO> getReviewsForBook(Long bookId) {
-        return reviewRepository.findByBookEntityId(bookId)
+    public List<ReviewResponse> getReviewsForBook(Long bookId) {
+        return reviewRepository.findByBookId(bookId)
                 .stream()
-                .map(this::mapToDTO)
+                .map(ReviewResponse::fromEntity)
                 .toList();
     }
 
     public String getAverageRating(Long bookId) {
-        double totalRatingPoints=0;
-        BookEntity bookEntity = bookRepository.findById(bookId).get();
-        List<ReviewEntity> reviewEntityList = reviewRepository.findByBookEntityId(bookId);
+        double totalRatingPoints = 0;
+        Book book = bookRepository.findById(bookId).orElse(null);
+
+        if (book == null) {
+            return "Book with Id: " + bookId + " is not found";
+        }
+
+        List<Review> reviewEntityList = reviewRepository.findByBookId(bookId);
         if (reviewEntityList.isEmpty()) {
             return "No reviews available for this book.";
         }
-        for(ReviewEntity review:reviewEntityList){
-            totalRatingPoints = totalRatingPoints + review.getRating();
+
+        for (Review review : reviewEntityList) {
+            totalRatingPoints = totalRatingPoints + review.rating;
         }
 
-        double averageReviewPoints = totalRatingPoints/reviewEntityList.size();
-        return "The average ratings for " + "'" + bookEntity.getTitle() +"' is " + averageReviewPoints ;
+        double averageReviewPoints = totalRatingPoints / reviewEntityList.size();
+
+        // TODO backend should return a structured response, frontend should display it however it likes, yb
+        return "The average ratings for " + "'" + book.title + "' is " + averageReviewPoints;
     }
 
-    public void deleteReviewById(Long reviewId){
-        if(!reviewRepository.existsById(reviewId)){
+    public void deleteReviewById(Long reviewId) {
+        if (!reviewRepository.existsById(reviewId)) {
             throw new RuntimeException("Review with id " + reviewId + " does not exist.");
         }
         reviewRepository.deleteById(reviewId);
     }
+
     @Transactional
-    public void deleteAllReviewsAndResetAutoIncrement(){
+    public void deleteAllReviewsAndResetAutoIncrement() {
         reviewRepository.deleteAll();
         reviewRepository.resetAutoIncrement();
     }
 
-    public ReviewResponseDTO mapToDTO(ReviewEntity reviewEntity){
-        ReviewResponseDTO reviewResponseDTO = new ReviewResponseDTO();
+    public Review createReviewEntity(Book book, User user, ReviewRequest reviewRequest) {
+        Review reviewEntity = new Review();
 
-        reviewResponseDTO.setId(reviewEntity.getId());
-        reviewResponseDTO.setComment(reviewEntity.getComment());
-        reviewResponseDTO.setRating(reviewEntity.getRating());
-        reviewResponseDTO.setBookId(reviewEntity.getBookEntity().getId());
-        reviewResponseDTO.setBookTitle(reviewEntity.getBookEntity().getTitle());
-        reviewResponseDTO.setUserId(reviewEntity.getUserEntity().getId());
-        reviewResponseDTO.setUserName(reviewEntity.getUserEntity().getName());
-        reviewResponseDTO.setCreatedAt(reviewEntity.getCreatedAt());
+        reviewEntity.rating = reviewRequest.rating();
+        reviewEntity.comment = reviewRequest.comment();
 
-        return reviewResponseDTO;
+        reviewEntity.book = book;
+        reviewEntity.user = user;
 
-    }
-
-    public ReviewEntity mapTOEntity(ReviewRequestDTO reviewRequestDTO){
-        BookEntity book = bookRepository.findById(reviewRequestDTO.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
-
-        UserEntity user = userRepository.findById(reviewRequestDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        ReviewEntity reviewEntity = new ReviewEntity();
-
-        reviewEntity.setRating(reviewRequestDTO.getRating());
-        reviewEntity.setComment(reviewRequestDTO.getComment());
-
-        reviewEntity.setBookEntity(book);
-        reviewEntity.setUserEntity(user);
-
-        reviewEntity.setCreatedAt(LocalDateTime.now());
+        reviewEntity.createdAt = LocalDateTime.now();
 
         return reviewEntity;
     }
