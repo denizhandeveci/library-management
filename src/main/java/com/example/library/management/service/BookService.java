@@ -1,14 +1,16 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.BookRequest;
-import com.example.library.management.dto.BookResponse;
+import com.example.library.management.dto.book.BookDetailsResponse;
+import com.example.library.management.dto.book.BookDetailsResponse.BookRecommendation;
+import com.example.library.management.dto.book.BookRequest;
+import com.example.library.management.dto.book.BookResponse;
+import com.example.library.management.dto.book.BookSortField;
 import com.example.library.management.entity.Book;
 import com.example.library.management.repository.BookRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,9 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -29,47 +29,62 @@ public class BookService
 
     private final BookRepository bookRepository;
 
-    @Autowired
     public BookService(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
-    public BookResponse create(BookRequest bookRequest) {
+    public List<BookResponse> getBooks(String title, BookSortField sortBy, Sort.Direction direction) {
+        Sort sort = Sort.by(direction, sortBy.propertyName());
+
+        List<Book> books;
+
+        if (title != null && !title.isBlank()) {
+            books = bookRepository.searchByTitle(title, sort);
+        } else {
+            books = bookRepository.findAllSorted(sort);
+        }
+
+        return books.stream()
+                .map(BookResponse::fromEntity)
+                .toList();
+    }
+
+    public BookDetailsResponse getBookDetails(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+
+        List<BookRecommendation> recommendationsByGenre = bookRepository.findByGenre(book.genre)
+                .stream()
+                .filter(sameGenreBook -> !book.id.equals(bookId)) // filter out book-at-hand
+                .map(BookRecommendation::fromEntity)
+                .toList();
+
+        List<BookRecommendation> recommendationsByAuthor = bookRepository.findByAuthor(book.author)
+                .stream()
+                .filter(sameAuthorBook -> !book.id.equals(bookId))
+                .map(BookRecommendation::fromEntity)
+                .toList();
+
+        return new BookDetailsResponse(
+                BookResponse.fromEntity(book),
+                recommendationsByGenre,
+                recommendationsByAuthor
+        );
+    }
+
+    public BookResponse createBook(BookRequest bookRequest) {
         Book entity = bookRequest.toEntity();
 
         entity = bookRepository.save(entity);
         return BookResponse.fromEntity(entity);
     }
 
-    public ResponseEntity<BookResponse> updateBook(Long id, BookRequest bookRequest) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
-
-        int loanedCopies = book.numOfTotalCopies - book.numOfCopiesAvailable;
-        int newTotalCopies = bookRequest.numOfTotalCopies();
-
-        if (newTotalCopies < loanedCopies) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "The total number of copies cannot be lower than the number of currently loaned copies."
-            );
-        }
-
-        book.title = bookRequest.title();
-        book.author = bookRequest.author();
-        book.genre = bookRequest.genre();
-        book.isbn = bookRequest.isbn();
-
-        book.numOfTotalCopies = newTotalCopies;
-        book.numOfCopiesAvailable = newTotalCopies - loanedCopies;
-        book.coverImageUrl = bookRequest.coverImageUrl();
-        book.available = book.numOfCopiesAvailable > 0;
-
-        book = bookRepository.save(book);
-
-        return ResponseEntity.ok(BookResponse.fromEntity(book));
-    }
-
+    // TODO clarify: we probably need to use this method instead and allow the admins to                            -  yb
+    //      upload an image for the book. Rn we ask for the cover image url, which isn't realistic.
+    // TODO further cleanup: creating the folder if it doesn't exist probably shouldn't be part of this method's    - yb
+    //      responsibility. Alternative approach (better?):
+    //            -> read the upload path from an env variable. Crash backend-startup if it's not specified
+    //            -> or it's an invalid folder that doesn't exist
     public BookResponse createBook(BookRequest bookRequest, MultipartFile coverImage) {
         var isCoverImageEmpty = coverImage == null || coverImage.isEmpty();
         System.out.println("File empty? " + isCoverImageEmpty);
@@ -101,7 +116,7 @@ public class BookService
                 }
 
                 // Generate unique file name to avoid conflicts
-                String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+                String uniqueFileName = UUID.randomUUID() + fileExtension;
 
                 // Full file path: uploads/unique-name.png
                 Path filePath = uploadPath.resolve(uniqueFileName);
@@ -128,19 +143,36 @@ public class BookService
 
     }
 
-    public List<BookResponse> createMultipleBooks(List<BookRequest> listOfBooks) {
-        List<Book> books = listOfBooks.stream()
-                .map(BookRequest::toEntity)
-                .toList();
+    @Transactional
+    public BookResponse updateBook(Long id, BookRequest bookRequest) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
 
-        List<Book> savedBooks = bookRepository.saveAll(books);
+        int loanedCopies = book.numOfTotalCopies - book.numOfCopiesAvailable;
+        int newTotalCopies = bookRequest.numOfTotalCopies();
 
-        return savedBooks.stream()
-                .map(BookResponse::fromEntity)
-                .toList();
+        if (newTotalCopies < loanedCopies) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "The total number of copies cannot be lower than the number of currently loaned copies."
+            );
+        }
+
+        book.title = bookRequest.title();
+        book.author = bookRequest.author();
+        book.genre = bookRequest.genre();
+        book.isbn = bookRequest.isbn();
+
+        book.numOfTotalCopies = newTotalCopies;
+        book.numOfCopiesAvailable = newTotalCopies - loanedCopies;
+        book.coverImageUrl = bookRequest.coverImageUrl();
+
+        book = bookRepository.save(book);
+
+        return BookResponse.fromEntity(book);
     }
 
-    public void deleteBookById(Long id) {
+    public void deleteBook(Long id) {
         bookRepository.deleteById(id);
     }
 
@@ -148,60 +180,5 @@ public class BookService
     public void deleteAllBooksAndResetAutoIncrement() {
         bookRepository.deleteAll();
         bookRepository.resetAutoIncrement();
-    }
-
-    public String searchBookByTitle(String title) {
-        Book bookEntity = bookRepository.findByTitle(title)
-                .orElseThrow(() -> new NoSuchElementException("Book with title '" + title + "' not found."));
-
-        // TODO discuss: code smell? The exact response layout isn't the job of the backend, backend should rather return a structured, yb
-        //  response JSON. FE can then display it however it likes.
-        return "'" + bookEntity.title + "'" + " is in the library and has " +
-                bookEntity.numOfCopiesAvailable + " copies available.";
-    }
-
-    public String viewBook(Long id) {
-        List<String> recommendationsByGenre = new ArrayList<>();
-        List<String> recommendationsByAuthor = new ArrayList<>();
-
-        Book book = bookRepository.findById(id).orElse(null);
-        if (book == null) {
-            return "Book with Id: " + id + " is not found";
-        }
-
-        List<Book> sameGenreBooks = bookRepository.fetchBooksByGenre(book.genre);
-        List<Book> sameAuthorBooks = bookRepository.fetchBooksByAuthorName(book.author);
-
-        for (Book sameGenreBook : sameGenreBooks) {
-            var isSameBook = book.id.equals(sameGenreBook.id);
-            if (!isSameBook) {
-                recommendationsByGenre.add(sameGenreBook.title);
-            }
-        }
-        for (Book sameAuthorBook : sameAuthorBooks) {
-            var isSameBook = book.id.equals(sameAuthorBook.id);
-            if (!isSameBook) {
-                recommendationsByAuthor.add(sameAuthorBook.title);
-            }
-        }
-
-        // TODO same here, backend should return a structured response, frontend should display it however it likes, yb
-        return "Here is the information about the book you are searching for:" + book +
-                "People who liked this genre also borrowed: " + recommendationsByGenre +
-                " People who liked this author also borrowed: " + recommendationsByAuthor;
-    }
-
-    public List<BookResponse> getAllBooksSortedByAuthorAsc() {
-        return bookRepository.getAllBooksSortedByAuthorAsc()
-                .stream()
-                .map(BookResponse::fromEntity)
-                .toList();
-    }
-
-    public List<BookResponse> getAllBooks() {
-        return bookRepository.findAll()
-                .stream()
-                .map(BookResponse::fromEntity)
-                .toList();
     }
 }

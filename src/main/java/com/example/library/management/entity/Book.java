@@ -1,18 +1,14 @@
 package com.example.library.management.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.util.List;
-
 @Entity
-@Table(name = "book")
+@Table(name = "books")
 public class Book
 {
     @Id
@@ -38,17 +34,8 @@ public class Book
     @Column(name = "genre")
     public String genre;
 
-    @Column(name = "available")
-    public Boolean available;
-
     @Column(name = "cover_image_url")
     public String coverImageUrl;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<Loan> loans;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<Reservation> reservations;
 
     // Required for JPA
     public Book() {}
@@ -61,7 +48,11 @@ public class Book
                 ", author='" + author + '\'' +
                 ", isbn='" + isbn + '\'' +
                 ", genre='" + genre + '\'' +
-                ", available=" + available +
+                ", available=" + isAvailable() +
                 '}';
+    }
+
+    public boolean isAvailable() {
+        return numOfCopiesAvailable > 0;
     }
 }

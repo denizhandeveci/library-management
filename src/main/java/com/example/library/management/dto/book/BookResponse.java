@@ -1,4 +1,4 @@
-package com.example.library.management.dto;
+package com.example.library.management.dto.book;
 
 import com.example.library.management.entity.Book;
 
@@ -12,8 +12,6 @@ public record BookResponse(
         Integer numOfTotalCopies,
         Integer numOfCopiesAvailable,
 
-        Boolean available,
-
         String coverImageUrl
 ) {
     public static BookResponse fromEntity(Book book) {
@@ -25,7 +23,6 @@ public record BookResponse(
                 book.genre,
                 book.numOfTotalCopies,
                 book.numOfCopiesAvailable,
-                book.available,
                 book.coverImageUrl
         );
     }
