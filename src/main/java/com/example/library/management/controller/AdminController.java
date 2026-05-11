@@ -1,15 +1,16 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.AdminRequestDTO;
-import com.example.library.management.dto.AdminResponseDTO;
-import com.example.library.management.dto.UserRequestDTO;
-import com.example.library.management.dto.UserResponseDTO;
+import com.example.library.management.dto.AdminRequest;
+import com.example.library.management.dto.AdminResponse;
 import com.example.library.management.service.AdminService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class AdminController {
+public class AdminController
+{
 
     private final com.example.library.management.service.AdminService AdminService;
     private final AdminService adminService;
@@ -18,19 +19,14 @@ public class AdminController {
         this.AdminService = AdminService;
         this.adminService = adminService;
     }
+
     @PostMapping("/create-admin")
-    public AdminResponseDTO createAdmin(@RequestBody AdminRequestDTO AdminRequestDTO){
+    public AdminResponse createAdmin(@RequestBody AdminRequest AdminRequestDTO) {
         return AdminService.createAdmin(AdminRequestDTO);
     }
 
     @PostMapping("/admin-login")
-    public ResponseEntity<AdminResponseDTO> loginAdmin(@RequestBody AdminRequestDTO loginDto) {
-        return adminService.getAdmin(loginDto.getEmail(), loginDto.getPassword());
+    public ResponseEntity<AdminResponse> loginAdmin(@RequestBody AdminRequest loginDto) {
+        return adminService.getAdmin(loginDto.email(), loginDto.password());
     }
-
-
-//    @PostMapping("/return-book/{AdminId}/{bookId}")
-//    public void returnBook(@PathVariable Long AdminId, @PathVariable Long bookId){
-//        AdminService.returnBook(AdminId,bookId);
-//    }
 }
