@@ -11,6 +11,7 @@ import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.LoanRepository;
 import com.example.library.management.repository.ReservationRepository;
 import com.example.library.management.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,7 @@ public class LoanService
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
 
-        boolean loanedAndNotReturned = loanRepository.existsOpenLoanByUserIdAndBookId(book.id, user.id);
+        boolean loanedAndNotReturned = loanRepository.existsOpenLoanByUserIdAndBookId(user.id, book.id);
         if (loanedAndNotReturned) {
             throw new IllegalStateException("User with ID " + user.id + " has already loaned this book and not returned it yet.");
         }
@@ -84,7 +85,7 @@ public class LoanService
         return LoanResponse.fromEntity(savedLoan);
     }
 
-
+    @Transactional
     public void returnLoan(Long userId, Long bookId) {
 
         // Finds the active loan. If the user loaned the same book before and returned it, we don't want it we want the active loan
@@ -111,10 +112,10 @@ public class LoanService
         // Here is a simple if statement where I check if someone is waiting for this book
         // if yes, then I grab that reservation
         if (oldestReservation.isPresent()) {
-            Reservation reservationEntity = oldestReservation.get();
+            Reservation reservation = oldestReservation.get();
 
             // here off of the oldest reservation I grab the userId and the id of the reservation
-            Long reservedUserId = reservationEntity.user.id;
+            Long reservedUserId = reservation.user.id;
 
             // here I call the createLoan function I defined previously to create a loan
             LoanRequest dto = new LoanRequest(
@@ -124,7 +125,7 @@ public class LoanService
 
             createLoan(dto);
             // and finally I delete the reservation
-            reservationRepository.delete(reservationEntity);
+            reservation.softDelete();
         }
         loanRepository.save(loan);
     }

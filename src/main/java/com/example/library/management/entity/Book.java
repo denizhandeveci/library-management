@@ -13,19 +13,19 @@ public class Book extends BaseEntity
         return "BOK-";
     }
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     public String title;
 
-    @Column(name = "num_of_total_copies")
+    @Column(name = "num_of_total_copies", nullable = false)
     public Integer numOfTotalCopies;
 
-    @Column(name = "num_of_copies_available")
+    @Column(name = "num_of_copies_available", nullable = false)
     public Integer numOfCopiesAvailable;
 
-    @Column(name = "author")
+    @Column(name = "author", nullable = false)
     public String author;
 
-    @Column(name = "isbn", unique = true)
+    @Column(name = "isbn", nullable = false, unique = true)
     public String isbn;
 
     @Column(name = "genre")

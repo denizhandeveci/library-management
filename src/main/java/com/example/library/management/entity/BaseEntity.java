@@ -24,7 +24,7 @@ public abstract class BaseEntity
     public Long id;
 
     @Version
-    @Column(name = "version")
+    @Column(name = "version", nullable = false)
     public Long version;
 
     @CreatedDate
