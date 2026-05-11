@@ -1,5 +1,7 @@
 package com.example.library.management.service;
 
+import com.example.library.management.dto.book.BookDetailsResponse;
+import com.example.library.management.dto.book.BookDetailsResponse.BookRecommendation;
 import com.example.library.management.dto.book.BookRequest;
 import com.example.library.management.dto.book.BookResponse;
 import com.example.library.management.dto.book.BookSortField;
@@ -7,10 +9,8 @@ import com.example.library.management.entity.Book;
 import com.example.library.management.repository.BookRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,9 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -31,7 +29,6 @@ public class BookService
 
     private final BookRepository bookRepository;
 
-    @Autowired
     public BookService(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
@@ -50,6 +47,29 @@ public class BookService
         return books.stream()
                 .map(BookResponse::fromEntity)
                 .toList();
+    }
+
+    public BookDetailsResponse getBookDetails(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+
+        List<BookRecommendation> recommendationsByGenre = bookRepository.findByGenre(book.genre)
+                .stream()
+                .filter(sameGenreBook -> !book.id.equals(bookId)) // filter out book-at-hand
+                .map(BookRecommendation::fromEntity)
+                .toList();
+
+        List<BookRecommendation> recommendationsByAuthor = bookRepository.findByAuthor(book.author)
+                .stream()
+                .filter(sameAuthorBook -> !book.id.equals(bookId))
+                .map(BookRecommendation::fromEntity)
+                .toList();
+
+        return new BookDetailsResponse(
+                BookResponse.fromEntity(book),
+                recommendationsByGenre,
+                recommendationsByAuthor
+        );
     }
 
     public BookResponse createBook(BookRequest bookRequest) {
@@ -96,7 +116,7 @@ public class BookService
                 }
 
                 // Generate unique file name to avoid conflicts
-                String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+                String uniqueFileName = UUID.randomUUID() + fileExtension;
 
                 // Full file path: uploads/unique-name.png
                 Path filePath = uploadPath.resolve(uniqueFileName);
@@ -123,7 +143,8 @@ public class BookService
 
     }
 
-    public ResponseEntity<BookResponse> updateBook(Long id, BookRequest bookRequest) {
+    @Transactional
+    public BookResponse updateBook(Long id, BookRequest bookRequest) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
 
@@ -148,7 +169,7 @@ public class BookService
 
         book = bookRepository.save(book);
 
-        return ResponseEntity.ok(BookResponse.fromEntity(book));
+        return BookResponse.fromEntity(book);
     }
 
     public void deleteBook(Long id) {
@@ -159,46 +180,5 @@ public class BookService
     public void deleteAllBooksAndResetAutoIncrement() {
         bookRepository.deleteAll();
         bookRepository.resetAutoIncrement();
-    }
-
-    public String searchBookByTitle(String title) {
-        Book bookEntity = bookRepository.findByTitle(title)
-                .orElseThrow(() -> new NoSuchElementException("Book with title '" + title + "' not found."));
-
-        // TODO discuss: code smell? The exact response layout isn't the job of the backend, backend should rather return a structured, yb
-        //  response JSON. FE can then display it however it likes.
-        return "'" + bookEntity.title + "'" + " is in the library and has " +
-                bookEntity.numOfCopiesAvailable + " copies available.";
-    }
-
-    public String viewBook(Long id) {
-        List<String> recommendationsByGenre = new ArrayList<>();
-        List<String> recommendationsByAuthor = new ArrayList<>();
-
-        Book book = bookRepository.findById(id).orElse(null);
-        if (book == null) {
-            return "Book with Id: " + id + " is not found";
-        }
-
-        List<Book> sameGenreBooks = bookRepository.findByGenre(book.genre);
-        List<Book> sameAuthorBooks = bookRepository.findByAuthor(book.author);
-
-        for (Book sameGenreBook : sameGenreBooks) {
-            var isSameBook = book.id.equals(sameGenreBook.id);
-            if (!isSameBook) {
-                recommendationsByGenre.add(sameGenreBook.title);
-            }
-        }
-        for (Book sameAuthorBook : sameAuthorBooks) {
-            var isSameBook = book.id.equals(sameAuthorBook.id);
-            if (!isSameBook) {
-                recommendationsByAuthor.add(sameAuthorBook.title);
-            }
-        }
-
-        // TODO same here, backend should return a structured response, frontend should display it however it likes, yb
-        return "Here is the information about the book you are searching for:" + book +
-                "People who liked this genre also borrowed: " + recommendationsByGenre +
-                " People who liked this author also borrowed: " + recommendationsByAuthor;
     }
 }

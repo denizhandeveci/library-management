@@ -1,12 +1,13 @@
 package com.example.library.management.controller;
 
+import com.example.library.management.dto.book.BookDetailsResponse;
 import com.example.library.management.dto.book.BookRequest;
 import com.example.library.management.dto.book.BookResponse;
 import com.example.library.management.dto.book.BookSortField;
 import com.example.library.management.service.BookService;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,9 +40,9 @@ public class BookController
         return bookService.getBooks(title, sortBy, direction);
     }
 
-    @GetMapping("/books/{id}")
-    public String viewBook(@PathVariable Long id) {
-        return bookService.viewBook(id);
+    @GetMapping("/books/{bookId}")
+    public BookDetailsResponse getBookDetails(@PathVariable Long bookId) {
+        return bookService.getBookDetails(bookId);
     }
 
     @PostMapping("/books")
@@ -49,12 +50,13 @@ public class BookController
 
         BookResponse saved = bookService.createBook(bookRequest);
 
-        return ResponseEntity.ok(saved);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(saved);
     }
 
     @PutMapping("/books/{bookId}")
-    @Transactional
-    public ResponseEntity<BookResponse> updateBook(
+    public BookResponse updateBook(
             @PathVariable Long bookId,
             @RequestBody @Valid BookRequest bookRequest
     )
@@ -63,13 +65,20 @@ public class BookController
     }
 
     @DeleteMapping("/books/{bookId}")
-    public void deleteBookById(@PathVariable Long bookId) {
+    public ResponseEntity<Void> deleteBookById(@PathVariable Long bookId) {
         bookService.deleteBook(bookId);
+
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/reset-library")
-    public String deleteAllBooksAndResetAutoIncrement() {
+    public ResetLibraryResponse deleteAllBooksAndResetAutoIncrement() {
         bookService.deleteAllBooksAndResetAutoIncrement();
-        return "All the data in library is deleted and reset";
+
+        return new ResetLibraryResponse("All the data in library is deleted and reset");
     }
+
+    public record ResetLibraryResponse(
+            String message
+    ) {}
 }
