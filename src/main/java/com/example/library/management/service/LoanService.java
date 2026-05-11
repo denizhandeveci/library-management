@@ -1,10 +1,10 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.LoanRequestDTO;
-import com.example.library.management.dto.LoanResponseDTO;
-import com.example.library.management.dto.ReservationRequestDTO;
+import com.example.library.management.dto.LoanRequest;
+import com.example.library.management.dto.LoanResponse;
+import com.example.library.management.dto.ReservationRequest;
 import com.example.library.management.entity.Book;
-import com.example.library.management.entity.LoanEntity;
+import com.example.library.management.entity.Loan;
 import com.example.library.management.entity.ReservationEntity;
 import com.example.library.management.entity.UserEntity;
 import com.example.library.management.repository.BookRepository;
@@ -15,12 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class LoanService {
+public class LoanService
+{
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
@@ -32,7 +32,8 @@ public class LoanService {
                        BookRepository bookRepository,
                        UserRepository userRepository,
                        ReservationRepository reservationRepository,
-                       ReservationService reservationService) {
+                       ReservationService reservationService)
+    {
         this.loanRepository = loanRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
@@ -40,61 +41,69 @@ public class LoanService {
         this.reservationService = reservationService;
     }
 
-    public List<LoanResponseDTO> findAllLoans(Long userId) {
-        List<LoanEntity> loanEntities = this.loanRepository.findAllByUserEntityIdAndIsReturnedFalse(userId);
-        List<LoanResponseDTO> loanResponseDTOS = new ArrayList<>();
-        for(LoanEntity loanEntity : loanEntities) {
-            loanResponseDTOS.add(mapToDTO(loanEntity));
-        }
-        return loanResponseDTOS;
+    public List<LoanResponse> findAllLoans(Long userId) {
+        List<Loan> loans = this.loanRepository.findAllByUserIdAndIsReturnedFalse(userId);
+
+        return loans.stream()
+                .map(LoanResponse::fromEntity)
+                .toList();
     }
 
-    public LoanResponseDTO createLoan(LoanRequestDTO loanRequestDTO) {
+    public LoanResponse createLoan(LoanRequest loanRequest) {
+        // TODO implement an interceptor or handle gracefully, don't throw a 5XX, yb
+        Book book = bookRepository.findById(loanRequest.bookId())
+                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        LoanEntity loanEntity = mapToEntity(loanRequestDTO);
-        Book book = loanEntity.getBookEntity();
-        Long bookId = book.id;
-        Long userId = loanEntity.getUserEntity().getId();
+        UserEntity user = userRepository.findById(loanRequest.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean loanedAndNotReturned = loanRepository.existsByBookEntityIdAndUserEntityIdAndIsReturnedFalse(bookId, userId);
 
+        boolean loanedAndNotReturned = loanRepository.existsByBookIdAndUserIdAndIsReturnedFalse(book.id, user.getId());
         if (loanedAndNotReturned) {
-            throw new IllegalStateException("User with ID " + userId + " has already loaned this book and not returned it yet.");
+            throw new IllegalStateException("User with ID " + user.getId() + " has already loaned this book and not returned it yet.");
         }
+
 
         if (!book.available) {
-            ReservationRequestDTO reservationRequestDTO = new ReservationRequestDTO();
-            reservationRequestDTO.setUserId(userId);
-            reservationRequestDTO.setBookId(bookId);
-            reservationService.makeReservation(reservationRequestDTO.getUserId(), reservationRequestDTO.getBookId());
+            ReservationRequest reservationRequest = new ReservationRequest(
+                    user.getId(),
+                    book.id
+            );
 
+            reservationService.makeReservation(reservationRequest.userId(), reservationRequest.bookId());
+
+            // TODO don't throw here but instead handle gracefully?, yb
             throw new IllegalStateException("Book is currently not available. Reservation has been made.");
         }
-        book.numOfCopiesAvailable -= 1;
 
+        book.numOfCopiesAvailable -= 1;
         book.available = book.numOfCopiesAvailable > 0;
 
-        LoanEntity savedLoan = loanRepository.save(loanEntity);
-        return mapToDTO(savedLoan);
-        }
+        Loan loanEntity = createLoanEntity(book, user);
+        Loan savedLoan = loanRepository.save(loanEntity);
+        return LoanResponse.fromEntity(savedLoan);
+    }
 
 
-
-    public void returnLoan(Long userId, Long bookId){
+    public void returnLoan(Long userId, Long bookId) {
 
         // Finds the active loan. If the user loaned the same book before and returned it, we don't want it we want the active loan
-        LoanEntity loanEntity = loanRepository.findByUserEntityIdAndBookEntityIdAndIsReturnedFalse(userId,bookId)
+        Loan loan = loanRepository.findByUserIdAndBookIdAndIsReturnedFalse(userId, bookId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
+
         // if the book is already returned, throw an exception and say it has already been returned.
-        if(loanEntity.isReturned()){
+        if (loan.isReturned) {
             throw new IllegalStateException("Book has already been returned");
         }
         // Else I set necessary fields
-        loanEntity.setReturned(true);
-        loanEntity.setReturnDate(LocalDate.now());
-        Book bookEntity = loanEntity.getBookEntity();
+        loan.isReturned = true;
+        loan.returnDate = LocalDate.now();
+
+        Book bookEntity = loan.book;
+
         bookEntity.available = true;
         bookEntity.numOfCopiesAvailable += 1;
+
         //bookRepository.save(bookEntity);
         // Here I write a query to find the oldest reservation
         // in other words, if multiple reservations are created by separate users for the same book
@@ -108,53 +117,31 @@ public class LoanService {
 
             // here off of the oldest reservation I grab the userId and the id of the reservation
             Long reservedUserId = reservationEntity.getUserId().getId();
+
             // here I call the createLoan function I defined previously to create a loan
-            LoanRequestDTO dto = new LoanRequestDTO();
-            dto.setBookId(bookId);
-            dto.setUserId(reservedUserId);
+            LoanRequest dto = new LoanRequest(
+                    bookId,
+                    reservedUserId
+            );
 
             createLoan(dto);
             // and finally I delete the reservation
             reservationRepository.delete(reservationEntity);
         }
-        loanRepository.save(loanEntity);
-        }
-
-    public LoanResponseDTO mapToDTO(LoanEntity loanEntity){
-        LoanResponseDTO dto = new LoanResponseDTO();
-
-        dto.setId(loanEntity.getId());
-        dto.setBookId(loanEntity.getBookEntity().id);
-        dto.setBookTitle(loanEntity.getBookEntity().title);
-        dto.setUserId(loanEntity.getUserEntity().getId());
-        dto.setUserName(loanEntity.getUserEntity().getName());
-        dto.setLoanDate(loanEntity.getLoanDate());
-        dto.setDueDate(loanEntity.getDueDate());
-        dto.setReturnDate(loanEntity.getReturnDate());
-        dto.setReturned(loanEntity.isReturned());
-        dto.setIsbn(loanEntity.getBookEntity().isbn);
-        dto.setGenre(loanEntity.getBookEntity().genre);
-        dto.setAuthor(loanEntity.getBookEntity().author);
-
-        return dto;
+        loanRepository.save(loan);
     }
 
-    public LoanEntity mapToEntity(LoanRequestDTO loanRequestDTO){
-        Book book = bookRepository.findById(loanRequestDTO.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+    public Loan createLoanEntity(Book book, UserEntity user) {
+        Loan loan = new Loan();
 
-        UserEntity user = userRepository.findById(loanRequestDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        loan.book = book;
+        loan.user = user;
 
-        LoanEntity loan = new LoanEntity();
+        loan.loanDate = LocalDate.now();
+        loan.dueDate = LocalDate.now().plusWeeks(2);
 
-        loan.setBookEntity(book);
-        loan.setUserEntity(user);
-        loan.setLoanDate(LocalDate.now());
-        loan.setDueDate(LocalDate.now().plusWeeks(2));
-
-        loan.setReturned(false);
-        loan.setReturnDate(null);
+        loan.isReturned = false;
+        loan.returnDate = null;
 
         return loan;
     }

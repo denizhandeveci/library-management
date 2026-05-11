@@ -38,18 +38,16 @@ public class ReservationService
 
     public ReservationResponseDTO makeReservation(Long userId, Long bookId) {
 
-        boolean exists = reservationRepository
-                .existsByBookEntityIdAndUserEntityId(bookId, userId);
+        boolean exists = reservationRepository.existsByBookEntityIdAndUserEntityId(bookId, userId);
 
         if (exists) {
-            throw new IllegalStateException
-                    ("User ID with" + userId +
-                            "already has a reservation for this book.");
+            throw new IllegalStateException("User ID with" + userId + "already has a reservation for this book.");
         }
+
         ReservationEntity reservationEntity = mapToEntity(userId, bookId);
         ReservationEntity savedReservation = reservationRepository.save(reservationEntity);
 
-        return mapToDTO(reservationEntity);
+        return mapToDTO(savedReservation);
     }
 
     public void deleteReservationById(Long reservationId) {

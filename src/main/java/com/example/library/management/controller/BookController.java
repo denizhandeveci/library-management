@@ -41,6 +41,7 @@ public class BookController {
     public List<BookResponse> createMultipleBooks(@RequestBody List<BookRequest> listOfBooks){
         return bookService.createMultipleBooks(listOfBooks);
     }
+
     @DeleteMapping("/delete-book-by-id/{id}")
     public void deleteBookById(@PathVariable Long id){
         bookService.deleteBookById(id);

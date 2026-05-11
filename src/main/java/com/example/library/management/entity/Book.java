@@ -44,8 +44,8 @@ public class Book
     @Column
     public String coverImageUrl;
 
-    @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<LoanEntity> loans;
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<Loan> loans;
     @OneToMany(mappedBy = "bookEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<ReservationEntity> reservations;
 

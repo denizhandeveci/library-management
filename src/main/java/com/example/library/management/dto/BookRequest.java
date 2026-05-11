@@ -8,10 +8,8 @@ public record BookRequest(
         String isbn,
         String genre,
         Integer numOfTotalCopies,
-        Integer numOfCopiesAvailable,
-        String coverImageUrl,
-        Boolean available
-)
+        String coverImageUrl
+        )
 {
     public Book toEntity() {
         Book book = new Book();
@@ -21,8 +19,8 @@ public record BookRequest(
         book.isbn = isbn();
         book.genre = genre();
         book.numOfTotalCopies = numOfTotalCopies();
-        book.numOfCopiesAvailable = numOfCopiesAvailable();
-        book.available = available();
+        book.numOfCopiesAvailable = numOfTotalCopies();
+        book.available = true;
 
         return book;
     }

@@ -24,8 +24,8 @@ public class UserEntity {
     @Column(unique = true, nullable = false)
     private String password;
 
-    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL)
-    private List<LoanEntity> loans;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Loan> loans;
     @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL)
     private List<ReservationEntity> reservations;
     public UserEntity( String name, String email, String phoneNumber, String address, String password) {

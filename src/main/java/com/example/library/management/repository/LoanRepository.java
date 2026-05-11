@@ -1,23 +1,21 @@
 package com.example.library.management.repository;
 
-import com.example.library.management.entity.LoanEntity;
+import com.example.library.management.entity.Loan;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LoanRepository extends JpaRepository<LoanEntity,Long> {
+public interface LoanRepository extends JpaRepository<Loan,Long> {
 
     // This query simply finds loan by user and book which is currently not returned and still and active loan
-    Optional<LoanEntity> findByUserEntityIdAndBookEntityIdAndIsReturnedFalse(Long userId, Long bookId);
+    Optional<Loan> findByUserIdAndBookIdAndIsReturnedFalse(Long userId, Long bookId);
 
 
-    boolean existsByBookEntityIdAndUserEntityIdAndIsReturnedFalse(Long bookId, Long userId);
+    boolean existsByBookIdAndUserIdAndIsReturnedFalse(Long bookId, Long userId);
 
-    List<LoanEntity> findAllByUserEntityIdAndIsReturnedFalse(Long userId);
+    List<Loan> findAllByUserIdAndIsReturnedFalse(Long userId);
 
 }

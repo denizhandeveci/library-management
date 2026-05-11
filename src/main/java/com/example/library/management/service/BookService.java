@@ -35,40 +35,35 @@ public class BookService
     }
 
     public BookResponse create(BookRequest bookRequest) {
-        Book bookEntity = new Book();
-        bookEntity.title = bookRequest.title();
-        bookEntity.author = bookRequest.author();
-        bookEntity.isbn = bookRequest.isbn();
-        bookEntity.genre = bookRequest.genre();
-        bookEntity.numOfTotalCopies = bookRequest.numOfTotalCopies();
-        bookEntity.coverImageUrl = bookRequest.coverImageUrl();
-        bookEntity.available = true;
-        bookEntity.numOfCopiesAvailable = bookRequest.numOfCopiesAvailable();
+        Book entity = bookRequest.toEntity();
 
-        bookEntity = bookRepository.save(bookEntity);
-        return BookResponse.fromEntity(bookEntity);
+        entity = bookRepository.save(entity);
+        return BookResponse.fromEntity(entity);
     }
 
     public ResponseEntity<BookResponse> updateBook(Long id, BookRequest bookRequest) {
-        Book book = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
 
-        // TODO clarify, what does this part actually do?, yb
-        int downgradedBookNumber = bookRequest.numOfCopiesAvailable() - book.numOfTotalCopies;
+        int loanedCopies = book.numOfTotalCopies - book.numOfCopiesAvailable;
+        int newTotalCopies = bookRequest.numOfTotalCopies();
 
-        if (downgradedBookNumber < 0) {
+        if (newTotalCopies < loanedCopies) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "The total number of copies cannot be reduced below zero."
+                    "The total number of copies cannot be lower than the number of currently loaned copies."
             );
         }
 
-        book.numOfCopiesAvailable = downgradedBookNumber + book.numOfCopiesAvailable;
         book.title = bookRequest.title();
         book.author = bookRequest.author();
         book.genre = bookRequest.genre();
         book.isbn = bookRequest.isbn();
-        book.numOfTotalCopies = bookRequest.numOfTotalCopies();
+
+        book.numOfTotalCopies = newTotalCopies;
+        book.numOfCopiesAvailable = newTotalCopies - loanedCopies;
         book.coverImageUrl = bookRequest.coverImageUrl();
+        book.available = book.numOfCopiesAvailable > 0;
 
         book = bookRepository.save(book);
 
