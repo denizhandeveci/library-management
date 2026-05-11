@@ -112,8 +112,6 @@ public class ReviewService
         reviewEntity.book = book;
         reviewEntity.user = user;
 
-        reviewEntity.createdAt = LocalDateTime.now();
-
         return reviewEntity;
     }
 

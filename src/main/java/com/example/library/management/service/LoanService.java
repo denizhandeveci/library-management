@@ -12,6 +12,7 @@ import com.example.library.management.repository.LoanRepository;
 import com.example.library.management.repository.ReservationRepository;
 import com.example.library.management.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -42,7 +43,7 @@ public class LoanService
     }
 
     public List<LoanResponse> findAllLoans(Long userId) {
-        List<Loan> loans = this.loanRepository.findAllByUserIdAndIsReturnedFalse(userId);
+        List<Loan> loans = this.loanRepository.findOpenLoansByUserId(userId);
 
         return loans.stream()
                 .map(LoanResponse::fromEntity)
@@ -58,7 +59,7 @@ public class LoanService
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
 
-        boolean loanedAndNotReturned = loanRepository.existsByBookIdAndUserIdAndIsReturnedFalse(book.id, user.id);
+        boolean loanedAndNotReturned = loanRepository.existsOpenLoanByUserIdAndBookId(book.id, user.id);
         if (loanedAndNotReturned) {
             throw new IllegalStateException("User with ID " + user.id + " has already loaned this book and not returned it yet.");
         }
@@ -87,15 +88,14 @@ public class LoanService
     public void returnLoan(Long userId, Long bookId) {
 
         // Finds the active loan. If the user loaned the same book before and returned it, we don't want it we want the active loan
-        Loan loan = loanRepository.findByUserIdAndBookIdAndIsReturnedFalse(userId, bookId)
+        Loan loan = loanRepository.findOpenLoanByUserIdAndBookId(userId, bookId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
         // if the book is already returned, throw an exception and say it has already been returned.
-        if (loan.isReturned) {
+        if (loan.isReturned()) {
             throw new IllegalStateException("Book has already been returned");
         }
         // Else I set necessary fields
-        loan.isReturned = true;
         loan.returnDate = LocalDate.now();
 
         Book bookEntity = loan.book;
@@ -106,8 +106,8 @@ public class LoanService
         // Here I write a query to find the oldest reservation
         // in other words, if multiple reservations are created by separate users for the same book
         // once the book is available again, the first user that reserved the book will be able to loan it.
-        Optional<Reservation> oldestReservation =
-                reservationRepository.findFirstByBookIdOrderByIdAsc(bookId);
+        Optional<Reservation> oldestReservation = findFirstReservation(bookId);
+
         // Here is a simple if statement where I check if someone is waiting for this book
         // if yes, then I grab that reservation
         if (oldestReservation.isPresent()) {
@@ -129,6 +129,12 @@ public class LoanService
         loanRepository.save(loan);
     }
 
+    public Optional<Reservation> findFirstReservation(Long bookId) {
+        return reservationRepository
+                .findActiveReservationsByBookId(bookId, PageRequest.of(0, 1))
+                .stream().findFirst();
+    }
+
     public Loan createLoanEntity(Book book, User user) {
         Loan loan = new Loan();
 
@@ -138,7 +144,6 @@ public class LoanService
         loan.loanDate = LocalDate.now();
         loan.dueDate = LocalDate.now().plusWeeks(2);
 
-        loan.isReturned = false;
         loan.returnDate = null;
 
         return loan;

@@ -35,7 +35,7 @@ public record ReviewResponse(
                 user.id,
                 user.name,
 
-                review.createdAt
+                review.created
         );
     }
 }

@@ -2,6 +2,7 @@ package com.example.library.management.service;
 
 import com.example.library.management.dto.UserRequest;
 import com.example.library.management.dto.UserResponse;
+import com.example.library.management.entity.BaseEntity;
 import com.example.library.management.entity.User;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
@@ -41,10 +42,11 @@ public class UserService
     @Transactional
     public void deleteUser(Long userId) {
         User userEntity = userRepository.findById(userId).orElseThrow();
-        userRepository.delete(userEntity);
-        reviewRepository.deleteByUserId(userId);
 
+        userEntity.softDelete();
 
+        var reviews = reviewRepository.findByUserId(userId);
+        reviews.forEach(BaseEntity::softDelete);
     }
 
     public ResponseEntity<UserResponse> getUser(String email, String password) {

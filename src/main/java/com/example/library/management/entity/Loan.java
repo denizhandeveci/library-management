@@ -2,9 +2,6 @@ package com.example.library.management.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -13,11 +10,12 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "loans")
-public class Loan
+public class Loan extends BaseEntity
 {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    @Override
+    public String getIdPrefix() {
+        return "LON-";
+    }
 
     @ManyToOne
     @JoinColumn(name = "book_id")
@@ -36,9 +34,9 @@ public class Loan
     @Column(name = "return_date")
     public LocalDate returnDate;
 
-    @Column(name = "is_returned")
-    public boolean isReturned = false;
-
+    public boolean isReturned() {
+        return returnDate != null;
+    }
 
     public Loan() {}
 }

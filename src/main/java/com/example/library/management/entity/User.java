@@ -1,39 +1,32 @@
 package com.example.library.management.entity;
 
-import jakarta.persistence.*;
-
-
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name="users")
-public class User
+@Table(name = "users")
+public class User extends BaseEntity
 {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    public Long id;
+    @Override
+    public String getIdPrefix() {
+        return "USR-";
+    }
 
-    @Column(name="name")
+    @Column(name = "name")
     public String name;
 
-    @Column(name="email")
+    @Column(name = "email")
     public String email;
 
-    @Column(name="phone_number")
+    @Column(name = "phone_number")
     public String phoneNumber;
 
-    @Column(name="address")
+    @Column(name = "address")
     public String address;
 
     @Column(nullable = false)
     public String password;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    public List<Loan> loans;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    public List<Reservation> reservations;
-
-    public User(){}
+    public User() {}
 }

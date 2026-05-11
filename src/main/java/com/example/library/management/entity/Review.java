@@ -2,23 +2,18 @@ package com.example.library.management.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "reviews")
-public class Review
+public class Review extends BaseEntity
 {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    public Long id;
+    @Override
+    public String getIdPrefix() {
+        return "REV-";
+    }
 
     @ManyToOne
     @JoinColumn(name = "book_id")
@@ -34,9 +29,6 @@ public class Review
     @Column(length = 1000, name = "comment")
     public String comment;
 
-    @Column(name = "created_at")
-    public LocalDateTime createdAt;
-
     public Review() {}
 
     public String toString() {
@@ -45,7 +37,7 @@ public class Review
                 ", comment='" + comment + '\'' +
                 ", bookEntity=" + book.title +
                 ", userEntity=" + user.name +
-                ", createdAt=" + createdAt +
+                ", createdAt=" + created +
                 '}';
     }
 }

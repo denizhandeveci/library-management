@@ -42,7 +42,7 @@ public record LoanResponse(
                 loan.loanDate,
                 loan.dueDate,
                 loan.returnDate,
-                loan.isReturned
+                loan.isReturned()
         );
     }
 }
