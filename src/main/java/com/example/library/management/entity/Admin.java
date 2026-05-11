@@ -14,10 +14,10 @@ public class Admin extends BaseEntity
         return "ADM-";
     }
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     public String name;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     public String email;
 
     @Column(name = "phone_number")
@@ -26,7 +26,7 @@ public class Admin extends BaseEntity
     @Column(name = "address")
     public String address;
 
-    @Column(name = "password")
+    @Column(name = "password", nullable = false)
     public String password;
 
     public Admin() {}

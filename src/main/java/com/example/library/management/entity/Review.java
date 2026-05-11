@@ -15,15 +15,15 @@ public class Review extends BaseEntity
         return "REV-";
     }
 
-    @ManyToOne
-    @JoinColumn(name = "book_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "book_id", nullable = false)
     public Book book;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     public User user;
 
-    @Column(name = "rating")
+    @Column(name = "rating", nullable = false)
     public int rating;
 
     @Column(length = 1000, name = "comment")

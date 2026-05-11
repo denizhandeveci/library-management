@@ -17,18 +17,18 @@ public class Loan extends BaseEntity
         return "LON-";
     }
 
-    @ManyToOne
-    @JoinColumn(name = "book_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "book_id", nullable = false)
     public Book book;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     public User user;
 
-    @Column(name = "loan_date")
+    @Column(name = "loan_date", nullable = false)
     public LocalDate loanDate;
 
-    @Column(name = "due_date")
+    @Column(name = "due_date", nullable = false)
     public LocalDate dueDate;
 
     @Column(name = "return_date")

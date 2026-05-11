@@ -13,13 +13,13 @@ public class User extends BaseEntity
         return "USR-";
     }
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     public String name;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     public String email;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", nullable = false)
     public String phoneNumber;
 
     @Column(name = "address")

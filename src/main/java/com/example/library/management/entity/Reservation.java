@@ -17,15 +17,15 @@ public class Reservation extends BaseEntity
         return "RSV-";
     }
 
-    @Column(name = "reservation_date")
+    @Column(name = "reservation_date", nullable = false)
     public LocalDate reservationDate;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     public User user;
 
-    @ManyToOne
-    @JoinColumn(name = "book_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "book_id", nullable = false)
     public Book book;
 
     public Reservation() {}
