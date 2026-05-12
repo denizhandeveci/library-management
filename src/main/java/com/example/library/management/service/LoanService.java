@@ -12,6 +12,8 @@ import com.example.library.management.repository.LoanRepository;
 import com.example.library.management.repository.ReservationRepository;
 import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import java.util.Optional;
 @Service
 public class LoanService
 {
+    private static final Logger log = LoggerFactory.getLogger(LoanService.class);
+
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
@@ -46,33 +50,52 @@ public class LoanService
     public List<LoanResponse> findAllLoans(Long userId) {
         List<Loan> loans = this.loanRepository.findOpenLoansByUserId(userId);
 
+        log.debug("Found {} open loans for userId={}", loans.size(), userId);
+
         return loans.stream()
                 .map(LoanResponse::fromEntity)
                 .toList();
     }
 
+    @Transactional
     public LoanResponse createLoan(LoanRequest loanRequest) {
+        Long bookId = loanRequest.bookId();
+        Long userId = loanRequest.userId();
+
+        log.info("Creating loan for userId={} and bookId={}", userId, bookId);
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> {
+                    log.warn("Loan creation failed because bookId={} was not found", bookId);
+                    return new RuntimeException("Book not found");
+                });
         // TODO implement an interceptor or handle gracefully, don't throw a 5XX, yb
-        Book book = bookRepository.findById(loanRequest.bookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        User user = userRepository.findById(loanRequest.userId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("Loan creation failed because userId={} was not found", userId);
+                    return new RuntimeException("User not found");
+                });
 
         boolean loanedAndNotReturned = loanRepository.existsOpenLoanByUserIdAndBookId(user.id, book.id);
         if (loanedAndNotReturned) {
+            log.warn("Loan creation rejected because userId={} already has an open loan for bookId={}", user.id, book.id);
+
             throw new IllegalStateException("User with ID " + user.id + " has already loaned this book and not returned it yet.");
         }
 
 
         if (!book.isAvailable()) {
+            log.info("BookId={} is not available. Creating reservation for userId={}", book.id, user.id);
+
             ReservationRequest reservationRequest = new ReservationRequest(
                     user.id,
                     book.id
             );
 
             reservationService.makeReservation(reservationRequest.userId(), reservationRequest.bookId());
+
+            log.info("Reservation created instead of loan for userId={} and bookId={}", user.id, book.id);
 
             // TODO don't throw here but instead handle gracefully?, yb
             throw new IllegalStateException("Book is currently not available. Reservation has been made.");
@@ -83,26 +106,51 @@ public class LoanService
 
         Loan loanEntity = createLoanEntity(book, user);
         Loan savedLoan = loanRepository.save(loanEntity);
+
+        log.info(
+                "Loan created successfully with loanId={} for userId={} and bookId={}. Available copies now={}",
+                savedLoan.id,
+                user.id,
+                book.id,
+                book.numOfCopiesAvailable
+        );
+
         return LoanResponse.fromEntity(savedLoan);
     }
 
     @Transactional
     public void returnLoan(Long userId, Long bookId) {
+        log.info("Returning loan for userId={} and bookId={}", userId, bookId);
 
         // Finds the active loan. If the user loaned the same book before and returned it, we don't want it we want the active loan
         Loan loan = loanRepository.findOpenLoanByUserIdAndBookId(userId, bookId)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> {
+                    log.warn("Loan return failed because no open loan was found for userId={} and bookId={}", userId, bookId);
+                    return new RuntimeException("Loan not found");
+                });
 
         // if the book is already returned, throw an exception and say it has already been returned.
         if (loan.isReturned()) {
+            log.warn("Loan return rejected because loanId={} was already returned", loan.id);
+
             throw new IllegalStateException("Book has already been returned");
         }
+
         // Else I set necessary fields
         loan.returnDate = LocalDate.now();
 
         Book bookEntity = loan.book;
 
         bookEntity.numOfCopiesAvailable += 1;
+
+
+        log.info(
+                "Loan marked as returned with loanId={} for userId={} and bookId={}. Available copies now={}",
+                loan.id,
+                userId,
+                bookId,
+                bookEntity.numOfCopiesAvailable
+        );
 
         //bookRepository.save(bookEntity);
         // Here I write a query to find the oldest reservation
@@ -114,9 +162,15 @@ public class LoanService
         // if yes, then I grab that reservation
         if (oldestReservation.isPresent()) {
             Reservation reservation = oldestReservation.get();
-
             // here off of the oldest reservation I grab the userId and the id of the reservation
             Long reservedUserId = reservation.user.id;
+
+            log.info(
+                    "Found active reservationId={} for returned bookId={}. Creating loan for reservedUserId={}",
+                    reservation.id,
+                    bookId,
+                    reservedUserId
+            );
 
             // here I call the createLoan function I defined previously to create a loan
             LoanRequest dto = new LoanRequest(
@@ -127,14 +181,28 @@ public class LoanService
             createLoan(dto);
             // and finally I delete the reservation
             reservation.softDelete();
+
+            log.info(
+                    "ReservationId={} fulfilled and soft deleted for reservedUserId={} and bookId={}",
+                    reservation.id,
+                    reservedUserId,
+                    bookId
+            );
+        } else {
+            log.debug("No active reservation found for returned bookId={}", bookId);
         }
+
         loanRepository.save(loan);
     }
 
     public Optional<Reservation> findFirstReservation(Long bookId) {
-        return reservationRepository
+        Optional<Reservation> reservation = reservationRepository
                 .findActiveReservationsByBookId(bookId, PageRequest.of(0, 1))
                 .stream().findFirst();
+
+        log.debug("Oldest active reservation lookup for bookId={} foundReservation={}", bookId, reservation.isPresent());
+
+        return reservation;
     }
 
     public Loan createLoanEntity(Book book, User user) {

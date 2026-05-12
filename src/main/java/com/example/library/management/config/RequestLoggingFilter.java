@@ -22,7 +22,8 @@ public class RequestLoggingFilter extends OncePerRequestFilter
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException
     {
         long startTime = System.currentTimeMillis();
 

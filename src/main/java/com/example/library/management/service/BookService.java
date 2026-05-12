@@ -9,6 +9,8 @@ import com.example.library.management.entity.Book;
 import com.example.library.management.repository.BookRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.util.UUID;
 @Service
 public class BookService
 {
+    private static final Logger log = LoggerFactory.getLogger(BookService.class);
 
     private final BookRepository bookRepository;
 
@@ -40,8 +43,11 @@ public class BookService
 
         if (title != null && !title.isBlank()) {
             books = bookRepository.searchByTitle(title, sort);
+            log.debug("Found {} books matching title={} sorted by {} {}", books.size(), title, sortBy, direction);
+
         } else {
             books = bookRepository.findAllSorted(sort);
+            log.debug("Found {} books sorted by {} {}", books.size(), sortBy, direction);
         }
 
         return books.stream()
@@ -51,7 +57,10 @@ public class BookService
 
     public BookDetailsResponse getBookDetails(Long bookId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+                .orElseThrow(() -> {
+                    log.warn("Book details lookup failed because bookId={} was not found", bookId);
+                    return new EntityNotFoundException("Book not found with ID: " + bookId);
+                });
 
         List<BookRecommendation> recommendationsByGenre = bookRepository.findByGenre(book.genre)
                 .stream()
@@ -65,6 +74,14 @@ public class BookService
                 .map(BookRecommendation::fromEntity)
                 .toList();
 
+
+        log.debug(
+                "Loaded book details for bookId={} with {} genre recommendations and {} author recommendations",
+                bookId,
+                recommendationsByGenre.size(),
+                recommendationsByAuthor.size()
+        );
+
         return new BookDetailsResponse(
                 BookResponse.fromEntity(book),
                 recommendationsByGenre,
@@ -73,9 +90,14 @@ public class BookService
     }
 
     public BookResponse createBook(BookRequest bookRequest) {
+        log.info("Creating book with title={} and isbn={}", bookRequest.title(), bookRequest.isbn());
+
         Book entity = bookRequest.toEntity();
 
         entity = bookRepository.save(entity);
+
+        log.info("Book created successfully without upload with bookId={} and isbn={}", entity.id, entity.isbn);
+
         return BookResponse.fromEntity(entity);
     }
 
@@ -87,7 +109,13 @@ public class BookService
     //            -> or it's an invalid folder that doesn't exist
     public BookResponse createBook(BookRequest bookRequest, MultipartFile coverImage) {
         var isCoverImageEmpty = coverImage == null || coverImage.isEmpty();
-        System.out.println("File empty? " + isCoverImageEmpty);
+
+        log.info(
+                "Creating book with title={}, isbn={}, hasCoverImage={}",
+                bookRequest.title(),
+                bookRequest.isbn(),
+                !isCoverImageEmpty
+        );
 
         Book book = bookRequest.toEntity();
         var coverImageUrl = "";
@@ -103,11 +131,12 @@ public class BookService
                 // Create folder if it doesn't exist
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
+                    log.info("Created upload directory at path={}", uploadPath.toAbsolutePath());
                 }
 
                 // Get original file name (for example, "book.png")
                 String originalFileName = coverImage.getOriginalFilename();
-                System.out.println("Original file name: " + coverImage.getOriginalFilename());
+                log.debug("Received cover image file name={} for isbn={}", originalFileName, bookRequest.isbn());
 
                 // Extract file extension (for example, ".png")
                 String fileExtension = "";
@@ -126,32 +155,48 @@ public class BookService
 
                 // Save URL/path in database
                 coverImageUrl = "/uploads/" + uniqueFileName;
-                System.out.println("Generated URL: " + "/uploads/" + uniqueFileName);
+
+                log.info("Saved cover image for isbn={} at url={}", bookRequest.isbn(), coverImageUrl);
 
             } catch (IOException e) {
-                // Handle file saving errors
+                log.warn("Failed to save cover image for isbn={}", bookRequest.isbn());
+
                 throw new RuntimeException("Failed to save cover image", e);
             }
         }
 
         book.coverImageUrl = coverImageUrl;
 
-        // Save book in database
-        System.out.println("Book URL before save: " + book.coverImageUrl);
         Book savedBook = bookRepository.save(book);
+
+        log.info("Book created successfully with cover upload with bookId={} and isbn={}", savedBook.id, savedBook.isbn);
+
         return BookResponse.fromEntity(savedBook);
 
     }
 
     @Transactional
     public BookResponse updateBook(Long id, BookRequest bookRequest) {
+        log.info("Updating book with bookId={}", id);
+
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Book update failed because bookId={} was not found", id);
+
+                    return new EntityNotFoundException("Book not found with ID: " + id);
+                });
 
         int loanedCopies = book.numOfTotalCopies - book.numOfCopiesAvailable;
         int newTotalCopies = bookRequest.numOfTotalCopies();
 
         if (newTotalCopies < loanedCopies) {
+            log.warn(
+                    "Book update rejected for bookId={} because newTotalCopies={} is lower than loanedCopies={}",
+                    id,
+                    newTotalCopies,
+                    loanedCopies
+            );
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "The total number of copies cannot be lower than the number of currently loaned copies."
@@ -169,20 +214,38 @@ public class BookService
 
         book = bookRepository.save(book);
 
+
+        log.info(
+                "Book updated successfully with bookId={}, totalCopies={}, availableCopies={}",
+                book.id,
+                book.numOfTotalCopies,
+                book.numOfCopiesAvailable
+        );
+
         return BookResponse.fromEntity(book);
     }
 
     @Transactional
     public void softDeleteBook(Long id) {
+        log.info("Soft deleting book with bookId={}", id);
+
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Book deletion failed because bookId={} was not found", id);
+                    return new EntityNotFoundException("Book not found with id: " + id);
+                });
 
         book.softDelete();
+        log.info("Book soft deleted successfully with bookId={}", id);
     }
 
     @Transactional
     public void deleteAllBooksAndResetAutoIncrement() {
+        log.warn("Deleting all books and resetting auto increment");
+
         bookRepository.deleteAll();
         bookRepository.resetAutoIncrement();
+
+        log.warn("All books deleted and auto increment reset");
     }
 }
