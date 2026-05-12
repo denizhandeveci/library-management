@@ -17,14 +17,14 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/create-user")
-    public UserResponse createUser(@RequestBody UserRequest userRequestDTO) {
-        return userService.createUser(userRequestDTO);
+    @GetMapping("/users")
+    public List<UserResponse> getAllUsers(){
+        return userService.getAllUsers();
     }
 
-    @DeleteMapping("/delete-user/{userId}")
-    public void deleteUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
+    @PostMapping("/users")
+    public UserResponse createUser(@RequestBody UserRequest userRequestDTO) {
+        return userService.createUser(userRequestDTO);
     }
 
     @PostMapping("/login")
@@ -32,9 +32,11 @@ public class UserController {
         return userService.getUser(loginDto.email(), loginDto.password());
     }
 
-    @GetMapping("/get-all-users")
-    public List<UserResponse> getAllUsers(){
-        return userService.getAllUsers();
+    @DeleteMapping("/users/{userId}")
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
     }
+
+
 
 }

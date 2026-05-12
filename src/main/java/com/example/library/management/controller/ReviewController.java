@@ -17,29 +17,34 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @PostMapping("/add-review")
+    @GetMapping("/reviews/{bookId}")
+    public List<ReviewResponse> getReviewsForBook(@PathVariable Long bookId){
+        return reviewService.getReviewsForBook(bookId);
+    }
+
+    @GetMapping("/reviews/rating/{bookId}")
+    public String getAverageRating(@PathVariable Long bookId){
+        return reviewService.getAverageRating(bookId);
+    }
+
+    @PostMapping("/reviews")
     public ReviewResponse addReview(@RequestBody ReviewRequest reviewRequestDTO){
         return reviewService.addReview(reviewRequestDTO);
     }
+
     @PostMapping("/add-multiple-reviews")
     public List<ReviewResponse> addMultipleReviews(@RequestBody List<ReviewRequest> reviewRequestDTOList){
         return reviewService.addMultipleReviews(reviewRequestDTOList);
     }
-    @GetMapping("/get-reviews/{bookId}")
-    public List<ReviewResponse> getReviewsForBook(@PathVariable Long bookId){
-        return reviewService.getReviewsForBook(bookId);
-    }
-    @GetMapping("/get-average-rating/{bookId}")
-    public String getAverageRating(@PathVariable Long bookId){
-        return reviewService.getAverageRating(bookId);
-    }
-    @DeleteMapping("/delete-review-by-id/{id}")
-    public void deleteReviewById(@PathVariable Long id) {
-        reviewService.deleteReviewById(id);
-    }
+
     @PostMapping("/reset-reviews")
     public String deleteAllReviewsAndResetAutoIncrement(){
         reviewService.deleteAllReviewsAndResetAutoIncrement();
         return "All the data in reviews DB is deleted and reset";
     }
+     @DeleteMapping("/delete-review-by-id/{id}")
+    public void deleteReviewById(@PathVariable Long id) {
+        reviewService.deleteReviewById(id);
+    }
+
 }

@@ -4,6 +4,7 @@ import com.example.library.management.dto.AdminRequest;
 import com.example.library.management.dto.AdminResponse;
 import com.example.library.management.service.AdminService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,13 +21,12 @@ public class AdminController
         this.adminService = adminService;
     }
 
-    @PostMapping("/create-admin")
-    public AdminResponse createAdmin(@RequestBody AdminRequest AdminRequestDTO) {
-        return AdminService.createAdmin(AdminRequestDTO);
-    }
-
-    @PostMapping("/admin-login")
+    @GetMapping("/admins")
     public ResponseEntity<AdminResponse> loginAdmin(@RequestBody AdminRequest loginDto) {
         return adminService.getAdmin(loginDto.email(), loginDto.password());
+    }
+    @PostMapping("/admins")
+    public AdminResponse createAdmin(@RequestBody AdminRequest AdminRequestDTO) {
+        return AdminService.createAdmin(AdminRequestDTO);
     }
 }

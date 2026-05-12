@@ -56,12 +56,16 @@ public class BookController
     }
 
     @PutMapping("/books/{bookId}")
-    public BookResponse updateBook(
-            @PathVariable Long bookId,
-            @RequestBody @Valid BookRequest bookRequest
-    )
-    {
+    public BookResponse updateBook(@PathVariable Long bookId,
+                                    @RequestBody @Valid BookRequest bookRequest){
         return bookService.updateBook(bookId, bookRequest);
+    }
+
+    @DeleteMapping("/books")
+    public ResetLibraryResponse deleteAllBooksAndResetAutoIncrement() {
+        bookService.deleteAllBooksAndResetAutoIncrement();
+
+        return new ResetLibraryResponse("All the data in library is deleted and reset");
     }
 
     @DeleteMapping("/books/{bookId}")
@@ -69,13 +73,6 @@ public class BookController
         bookService.softDeleteBook(bookId);
 
         return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/reset-library")
-    public ResetLibraryResponse deleteAllBooksAndResetAutoIncrement() {
-        bookService.deleteAllBooksAndResetAutoIncrement();
-
-        return new ResetLibraryResponse("All the data in library is deleted and reset");
     }
 
     public record ResetLibraryResponse(
