@@ -15,11 +15,9 @@ public class AdminController
 {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
-    private final com.example.library.management.service.AdminService AdminService;
     private final AdminService adminService;
 
-    public AdminController(AdminService AdminService, AdminService adminService) {
-        this.AdminService = AdminService;
+    public AdminController(AdminService adminService) {
         this.adminService = adminService;
     }
 
@@ -27,7 +25,7 @@ public class AdminController
     public AdminResponse createAdmin(@RequestBody AdminRequest adminRequest) {
         log.debug("Received create admin request for email={}", adminRequest.email());
 
-        return AdminService.createAdmin(adminRequest);
+        return adminService.createAdmin(adminRequest);
     }
 
     @PostMapping("/admins/login")
