@@ -25,7 +25,21 @@ public class ReviewController
         this.reviewService = reviewService;
     }
 
-    @PostMapping("/add-review")
+    @GetMapping("/reviews/{bookId}")
+    public List<ReviewResponse> getReviewsForBook(@PathVariable Long bookId) {
+        log.debug("Received get reviews request for bookId={}", bookId);
+
+        return reviewService.getReviewsForBook(bookId);
+    }
+
+    @GetMapping("/reviews/{bookId}/rating")
+    public String getAverageRating(@PathVariable Long bookId) {
+        log.debug("Received get average rating request for bookId={}", bookId);
+
+        return reviewService.getAverageRating(bookId);
+    }
+
+    @PostMapping("/reviews")
     public ReviewResponse addReview(@RequestBody ReviewRequest reviewRequest) {
         log.debug(
                 "Received add review request for userId={} and bookId={}",
@@ -36,41 +50,27 @@ public class ReviewController
         return reviewService.addReview(reviewRequest);
     }
 
-    @PostMapping("/add-multiple-reviews")
+    @PostMapping("/reviews/multiple")
     public List<ReviewResponse> addMultipleReviews(@RequestBody List<ReviewRequest> reviewRequests) {
         log.debug("Received add multiple reviews request with reviewCount={}", reviewRequests.size());
 
         return reviewService.addMultipleReviews(reviewRequests);
     }
 
-    @GetMapping("/get-reviews/{bookId}")
-    public List<ReviewResponse> getReviewsForBook(@PathVariable Long bookId) {
-        log.debug("Received get reviews request for bookId={}", bookId);
-
-        return reviewService.getReviewsForBook(bookId);
-    }
-
-    @GetMapping("/get-average-rating/{bookId}")
-    public String getAverageRating(@PathVariable Long bookId) {
-        log.debug("Received get average rating request for bookId={}", bookId);
-
-        return reviewService.getAverageRating(bookId);
-    }
-
-    @DeleteMapping("/delete-review-by-id/{id}")
-    public void deleteReviewById(@PathVariable Long id) {
-        log.debug("Received delete review request for reviewId={}", id);
-
-        reviewService.deleteReviewById(id);
-    }
-
-    @PostMapping("/reset-reviews")
+    @PostMapping("/reviews/reset")
     public ResetReviewsResponse deleteAllReviewsAndResetAutoIncrement() {
         log.warn("Received reset reviews request");
 
         reviewService.deleteAllReviewsAndResetAutoIncrement();
 
         return new ResetReviewsResponse("All the data in reviews DB is deleted and reset");
+    }
+
+    @DeleteMapping("/reviews/{id}")
+    public void deleteReviewById(@PathVariable Long id) {
+        log.debug("Received delete review request for reviewId={}", id);
+
+        reviewService.deleteReviewById(id);
     }
 
     public record ResetReviewsResponse(

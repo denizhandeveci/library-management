@@ -23,14 +23,14 @@ public class AdminController
         this.adminService = adminService;
     }
 
-    @PostMapping("/create-admin")
+    @PostMapping("/admins")
     public AdminResponse createAdmin(@RequestBody AdminRequest adminRequest) {
         log.debug("Received create admin request for email={}", adminRequest.email());
 
         return AdminService.createAdmin(adminRequest);
     }
 
-    @PostMapping("/admin-login")
+    @PostMapping("/admins/login")
     public ResponseEntity<AdminResponse> loginAdmin(@RequestBody AdminRequest loginDto) {
         log.debug("Received admin login request for email={}", loginDto.email());
 

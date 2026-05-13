@@ -83,7 +83,7 @@ public class BookController
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/reset-library")
+    @PostMapping("/books/reset")
     public ResetLibraryResponse deleteAllBooksAndResetAutoIncrement() {
         log.warn("Received reset library request");
 

@@ -26,32 +26,32 @@ public class UserController
         this.userService = userService;
     }
 
-    @PostMapping("/create-user")
+    @GetMapping("/users")
+    public List<UserResponse> getAllUsers() {
+        log.debug("Received get all users request");
+
+        return userService.getAllUsers();
+    }
+
+    @PostMapping("/users")
     public UserResponse createUser(@RequestBody UserRequest userRequest) {
         log.debug("Received create user request for email={}", userRequest.email());
 
         return userService.createUser(userRequest);
     }
 
-    @DeleteMapping("/delete-user/{userId}")
-    public void deleteUser(@PathVariable Long userId) {
-        log.debug("Received delete user request for userId={}", userId);
-
-        userService.deleteUser(userId);
-    }
-
-    @PostMapping("/login")
+    @PostMapping("/users/login")
     public ResponseEntity<UserResponse> loginUser(@RequestBody UserRequest loginDto) {
         log.debug("Received user login request for email={}", loginDto.email());
 
         return userService.getUser(loginDto.email(), loginDto.password());
     }
 
-    @GetMapping("/get-all-users")
-    public List<UserResponse> getAllUsers() {
-        log.debug("Received get all users request");
+    @DeleteMapping("/users/{userId}")
+    public void deleteUser(@PathVariable Long userId) {
+        log.debug("Received delete user request for userId={}", userId);
 
-        return userService.getAllUsers();
+        userService.deleteUser(userId);
     }
 
 }
