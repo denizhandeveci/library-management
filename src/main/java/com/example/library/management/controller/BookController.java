@@ -50,8 +50,6 @@ public class BookController
 
     @GetMapping("/books/{bookId}")
     public BookDetailsResponse getBookDetails(@PathVariable Long bookId) {
-        log.debug("Received get book details request for bookId={}", bookId);
-
         return bookService.getBookDetails(bookId);
     }
 

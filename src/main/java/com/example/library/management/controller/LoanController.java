@@ -22,22 +22,15 @@ public class LoanController
 
     @GetMapping("/loans/{userId}")
     public List<LoanResponse> getLoans(@PathVariable Long userId) {
-        log.debug("Received get loans request for userId={}", userId);
-
         return loanService.findAllLoans(userId);
     }
 
     @PostMapping("/loans")
-    public LoanResponse createLoan(@RequestBody LoanRequest loanRequest)
+    public LoanResponse createLoan(@RequestBody LoanRequest request)
     {
-        log.debug("Received create loan request for userId={} and bookId={}", loanRequest.userId(), loanRequest.bookId());
+        log.debug("Received create loan request for userId={} and bookId={}", request.userId(), request.bookId());
 
-        // TODO clarify/discuss: should be refactored to accept the request in the body?, yb
-        LoanRequest loanRequestDTO = new LoanRequest(
-                loanRequest.bookId(),
-                loanRequest.userId()
-        );
-        return loanService.createLoan(loanRequestDTO);
+        return loanService.createLoan(request);
     }
 
     @PostMapping("/loans/return")
@@ -46,7 +39,4 @@ public class LoanController
 
         loanService.returnLoan(loanRequest.userId(), loanRequest.bookId());
     }
-
-
-
 }

@@ -23,8 +23,6 @@ public class ReservationController
 
     @GetMapping("/reservations/{userId}")
     public List<ReservationResponse> getAllReservations(@PathVariable Long userId) {
-        log.debug("Received get reservations request for userId={}", userId);
-
         return reservationService.getAllReservations(userId);
     }
 

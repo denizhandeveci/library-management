@@ -33,8 +33,6 @@ public class UserController
     public List<UserResponse> getAllUsers() {
         accessEnforcer.requireAdmin();
 
-        log.debug("Received get all users request");
-
         return userService.getAllUsers();
     }
 

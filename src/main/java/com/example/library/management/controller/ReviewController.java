@@ -27,15 +27,11 @@ public class ReviewController
 
     @GetMapping("/reviews/{bookId}")
     public List<ReviewResponse> getReviewsForBook(@PathVariable Long bookId) {
-        log.debug("Received get reviews request for bookId={}", bookId);
-
         return reviewService.getReviewsForBook(bookId);
     }
 
     @GetMapping("/reviews/{bookId}/rating")
     public String getAverageRating(@PathVariable Long bookId) {
-        log.debug("Received get average rating request for bookId={}", bookId);
-
         return reviewService.getAverageRating(bookId);
     }
 
