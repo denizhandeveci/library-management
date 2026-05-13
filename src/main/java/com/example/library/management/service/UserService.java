@@ -2,17 +2,20 @@ package com.example.library.management.service;
 
 import com.example.library.management.dto.UserRequest;
 import com.example.library.management.dto.UserResponse;
+import com.example.library.management.dto.login.LoginResponse;
 import com.example.library.management.entity.BaseEntity;
 import com.example.library.management.entity.User;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
+import com.example.library.management.security.JwtService;
+import com.example.library.management.security.UserRole;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -23,15 +26,18 @@ public class UserService
 
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final JwtService jwtService;
 
     @Autowired
     public UserService(
             UserRepository userRepository,
-            ReviewRepository reviewRepository
+            ReviewRepository reviewRepository,
+            JwtService jwtService
     )
     {
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
+        this.jwtService = jwtService;
     }
 
     public UserResponse createUser(UserRequest userRequest) {
@@ -71,20 +77,20 @@ public class UserService
         );
     }
 
-    public ResponseEntity<UserResponse> getUser(String email, String password) {
-        log.info("User login attempt for email={}", email);
+    public LoginResponse<UserResponse> login(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password."));
 
-        User user = userRepository.findByEmailAndPassword(email, password).orElse(null);
-
-        if (user != null) {
-            log.info("User login successful for userId={} and email={}", user.id, email);
-
-            return ResponseEntity.ok(UserResponse.fromEntity(user));
+        if (!user.password.equals(password)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password.");
         }
+
+        UserResponse userResponse = UserResponse.fromEntity(user);
+        String token = jwtService.createToken(user.id, user.email, UserRole.USER);
 
         log.warn("User login failed for email={}", email);
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return LoginResponse.bearer(token, userResponse);
     }
 
     public List<UserResponse> getAllUsers() {

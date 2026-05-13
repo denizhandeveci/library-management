@@ -2,14 +2,17 @@ package com.example.library.management.service;
 
 import com.example.library.management.dto.AdminRequest;
 import com.example.library.management.dto.AdminResponse;
+import com.example.library.management.dto.login.LoginResponse;
 import com.example.library.management.entity.Admin;
 import com.example.library.management.repository.AdminRepository;
+import com.example.library.management.security.JwtService;
+import com.example.library.management.security.UserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AdminService
@@ -17,26 +20,27 @@ public class AdminService
     private static final Logger log = LoggerFactory.getLogger(AdminService.class);
 
     private final AdminRepository adminRepository;
+    private final JwtService jwtService;
 
     @Autowired
-    public AdminService(AdminRepository adminRepository)
+    public AdminService(AdminRepository adminRepository, JwtService jwtService)
     {
         this.adminRepository = adminRepository;
+        this.jwtService = jwtService;
     }
 
-    public ResponseEntity<AdminResponse> getAdmin(String email, String password) {
-        log.info("Admin login attempt for email={}", email);
+    public LoginResponse<AdminResponse> loginAdmin(String email, String password) {
+        Admin admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password."));
 
-        Admin admin = adminRepository.findByEmailAndPassword(email, password).orElse(null);
-        if (admin != null) {
-            log.info("Admin login successful for adminId={} and email={}", admin.id, email);
-
-            return ResponseEntity.ok(AdminResponse.fromEntity(admin));
+        if (!admin.password.equals(password)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password.");
         }
 
-        log.warn("Admin login failed for email={}", email);
+        AdminResponse adminResponse = AdminResponse.fromEntity(admin);
+        String token = jwtService.createToken(admin.id, admin.email, UserRole.ADMIN);
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return LoginResponse.bearer(token, adminResponse);
     }
 
     public AdminResponse createAdmin(AdminRequest adminRequest) {

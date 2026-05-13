@@ -2,10 +2,10 @@ package com.example.library.management.controller;
 
 import com.example.library.management.dto.AdminRequest;
 import com.example.library.management.dto.AdminResponse;
+import com.example.library.management.dto.login.LoginResponse;
 import com.example.library.management.service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,9 +29,9 @@ public class AdminController
     }
 
     @PostMapping("/admins/login")
-    public ResponseEntity<AdminResponse> loginAdmin(@RequestBody AdminRequest loginDto) {
+    public LoginResponse<AdminResponse> loginAdmin(@RequestBody AdminRequest loginDto) {
         log.debug("Received admin login request for email={}", loginDto.email());
 
-        return adminService.getAdmin(loginDto.email(), loginDto.password());
+        return adminService.loginAdmin(loginDto.email(), loginDto.password());
     }
 }

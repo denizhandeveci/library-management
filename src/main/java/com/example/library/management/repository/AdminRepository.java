@@ -30,4 +30,14 @@ public interface AdminRepository extends JpaRepository<Admin, Long>
             @Param("email") String email,
             @Param("password") String password
     );
+
+    @Query("""
+            SELECT a
+            FROM Admin a
+            WHERE a.email = :email
+            AND a.deleted IS NULL
+            """)
+    Optional<Admin> findByEmail(
+            @Param("email") String email
+    );
 }

@@ -4,7 +4,10 @@ import com.example.library.management.security.AuthenticatedUser;
 import com.example.library.management.security.JwtService;
 import com.example.library.management.security.UserRole;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +49,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
             return;
         }
 
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = authorizationHeader.substring(7);
 
         try {
@@ -72,12 +80,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (ExpiredJwtException exception) {
+            log.warn(
+                    "Expired JWT: method={}, uri={}, subject={}, expiredAt={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    exception.getClaims().getSubject(),
+                    exception.getClaims().getExpiration()
+            );
+            SecurityContextHolder.clearContext();
+        } catch (SignatureException exception) {
+            log.warn(
+                    "Invalid JWT signature: method={}, uri={}",
+                    request.getMethod(),
+                    request.getRequestURI()
+            );
+            SecurityContextHolder.clearContext();
+        } catch (MalformedJwtException exception) {
+            log.warn(
+                    "Malformed JWT: method={}, uri={}",
+                    request.getMethod(),
+                    request.getRequestURI()
+            );
+            SecurityContextHolder.clearContext();
         } catch (JwtException | IllegalArgumentException exception) {
-            log.warn("Invalid JWT received: {}", exception.getMessage());
+            log.warn(
+                    "Invalid JWT: method={}, uri={}, reason={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    exception.getMessage()
+            );
+
             SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
-
 }
