@@ -24,6 +24,7 @@ public class SecurityConfig
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -35,6 +36,8 @@ public class SecurityConfig
                         // Temporary bootstrap endpoint. // TODO, yb
                         // Later: seed first admin via Flyway, then make this authenticated/admin-only.
                         .requestMatchers(HttpMethod.POST, "/auth/admins/register").permitAll()
+
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

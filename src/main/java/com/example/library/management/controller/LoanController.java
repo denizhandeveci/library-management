@@ -5,6 +5,7 @@ import com.example.library.management.dto.LoanResponse;
 import com.example.library.management.service.LoanService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,7 +39,9 @@ public class LoanController
     }
 
     @PostMapping("/loans/{loanId}/return")
-    public void returnLoan(@PathVariable Long loanId) {
+    public ResponseEntity<Void> returnLoan(@PathVariable Long loanId) {
         loanService.returnLoan(loanId);
+
+        return ResponseEntity.noContent().build();
     }
 }
