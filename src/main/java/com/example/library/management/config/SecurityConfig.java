@@ -27,14 +27,14 @@ public class SecurityConfig
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/admins/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/users/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/users/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/admins/login").permitAll()
 
 
                         // Temporary bootstrap endpoint. // TODO, yb
                         // Later: seed first admin via Flyway, then make this authenticated/admin-only.
-                        .requestMatchers(HttpMethod.POST, "/admins").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/admins/register").permitAll()
 
                         .anyRequest().authenticated()
                 )

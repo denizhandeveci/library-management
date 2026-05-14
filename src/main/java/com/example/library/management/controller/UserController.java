@@ -1,8 +1,6 @@
 package com.example.library.management.controller;
 
-import com.example.library.management.dto.UserRequest;
 import com.example.library.management.dto.UserResponse;
-import com.example.library.management.dto.login.LoginResponse;
 import com.example.library.management.security.AccessEnforcer;
 import com.example.library.management.service.UserService;
 import org.slf4j.Logger;
@@ -10,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,20 +30,6 @@ public class UserController
         accessEnforcer.requireAdmin();
 
         return userService.getAllUsers();
-    }
-
-    @PostMapping("/users")
-    public UserResponse createUser(@RequestBody UserRequest userRequest) {
-        log.debug("Received create user request for email={}", userRequest.email());
-
-        return userService.createUser(userRequest);
-    }
-
-    @PostMapping("/users/login")
-    public LoginResponse<UserResponse> loginUser(@RequestBody UserRequest loginDto) {
-        log.debug("Received user login request for email={}", loginDto.email());
-
-        return userService.login(loginDto.email(), loginDto.password());
     }
 
     @DeleteMapping("/users/{userId}")
