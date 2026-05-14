@@ -1,6 +1,7 @@
 package com.example.library.management.config;
 
 import com.example.library.management.security.AuthenticatedUser;
+import com.example.library.management.security.JwtCookieService;
 import com.example.library.management.security.JwtService;
 import com.example.library.management.security.UserRole;
 import io.jsonwebtoken.Claims;
@@ -23,6 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter
@@ -30,9 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
+    private final JwtCookieService jwtCookieService;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            JwtCookieService jwtCookieService
+    ) {
         this.jwtService = jwtService;
+        this.jwtCookieService = jwtCookieService;
     }
 
     @Override
@@ -42,9 +49,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException
     {
-        String authorizationHeader = request.getHeader("Authorization");
+        Optional<String> token = jwtCookieService.extractToken(request);
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+        if(token.isEmpty()) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,10 +61,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
             return;
         }
 
-        String token = authorizationHeader.substring(7);
-
         try {
-            Claims claims = jwtService.parseClaims(token);
+            Claims claims = jwtService.parseClaims(token.get());
 
             String email = claims.getSubject();
             String role = claims.get("role", String.class);

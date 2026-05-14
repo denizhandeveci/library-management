@@ -30,7 +30,7 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.POST, "/auth/users/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/admins/login").permitAll()
-
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
 
                         // Temporary bootstrap endpoint. // TODO, yb
                         // Later: seed first admin via Flyway, then make this authenticated/admin-only.
