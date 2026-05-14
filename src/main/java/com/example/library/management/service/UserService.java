@@ -3,6 +3,7 @@ package com.example.library.management.service;
 import com.example.library.management.dto.UserResponse;
 import com.example.library.management.entity.BaseEntity;
 import com.example.library.management.entity.User;
+import com.example.library.management.exception.ResourceNotFoundException;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -49,7 +50,7 @@ public class UserService
         User userEntity = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("User deletion failed because userId={} was not found", userId);
-                    return new RuntimeException("User not found");
+                    return ResourceNotFoundException.forId("User", userId);
                 });
 
         userEntity.softDelete();

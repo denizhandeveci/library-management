@@ -5,6 +5,7 @@ import com.example.library.management.dto.ReviewResponse;
 import com.example.library.management.entity.Book;
 import com.example.library.management.entity.Review;
 import com.example.library.management.entity.User;
+import com.example.library.management.exception.ResourceNotFoundException;
 import com.example.library.management.repository.BookRepository;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
@@ -43,13 +44,13 @@ public class ReviewService
         Book book = bookRepository.findById(reviewRequest.bookId())
                 .orElseThrow(() -> {
                     log.warn("Review creation failed because bookId={} was not found", reviewRequest.bookId());
-                    return new RuntimeException("Book not found");
+                    return ResourceNotFoundException.forId("Book", reviewRequest.bookId());
                 });
 
         User user = userRepository.findById(reviewRequest.userId())
                 .orElseThrow(() -> {
                     log.warn("Review creation failed because userId={} was not found", reviewRequest.userId());
-                    return new RuntimeException("User not found");
+                    return ResourceNotFoundException.forId("User", reviewRequest.userId());
                 });
 
         Review savedReview = reviewRepository.save(createReviewEntity(book, user, reviewRequest));
@@ -72,13 +73,13 @@ public class ReviewService
                     Book book = bookRepository.findById(reviewRequest.bookId())
                             .orElseThrow(() -> {
                                 log.warn("Bulk review creation failed because bookId={} was not found", reviewRequest.bookId());
-                                return new RuntimeException("Book not found");
+                                return ResourceNotFoundException.forId("Book", reviewRequest.bookId());
                             });
 
                     User user = userRepository.findById(reviewRequest.userId())
                             .orElseThrow(() -> {
                                 log.warn("Bulk review creation failed because userId={} was not found", reviewRequest.userId());
-                                return new RuntimeException("User not found");
+                                return ResourceNotFoundException.forId("User", reviewRequest.userId());
                             });
 
                     return createReviewEntity(book, user, reviewRequest);
@@ -106,37 +107,28 @@ public class ReviewService
     }
 
     public String getAverageRating(Long bookId) {
-        double totalRatingPoints = 0;
-        Book book = bookRepository.findById(bookId).orElse(null);
-
-        if (book == null) {
-            log.warn("Average rating lookup failed because bookId={} was not found", bookId);
-
-            return "Book with Id: " + bookId + " is not found";
-        }
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> ResourceNotFoundException.forId("Book", bookId));
 
         List<Review> reviews = reviewRepository.findByBookId(bookId);
         if (reviews.isEmpty()) {
-            log.debug("No reviews found while calculating average rating for bookId={}", bookId);
-
             return "No reviews available for this book.";
         }
 
-        for (Review review : reviews) {
-            totalRatingPoints = totalRatingPoints + review.rating;
-        }
-
-        double averageReviewPoints = totalRatingPoints / reviews.size();
+        var averageRating = reviews.stream()
+                .mapToInt(review -> review.rating)
+                .average()
+                .orElse(0);
 
         log.debug(
                 "Calculated average rating={} from reviewCount={} for bookId={}",
-                averageReviewPoints,
+                averageRating,
                 reviews.size(),
                 bookId
         );
 
         // TODO backend should return a structured response, frontend should display it however it likes, yb
-        return "The average ratings for " + "'" + book.title + "' is " + averageReviewPoints;
+        return "The average ratings for " + "'" + book.title + "' is " + averageRating;
     }
 
     public void deleteReviewById(Long reviewId) {
@@ -145,7 +137,7 @@ public class ReviewService
         if (!reviewRepository.existsById(reviewId)) {
             log.warn("Review deletion failed because reviewId={} does not exist", reviewId);
 
-            throw new RuntimeException("Review with id " + reviewId + " does not exist.");
+            throw ResourceNotFoundException.forId("Review", reviewId);
         }
         reviewRepository.deleteById(reviewId);
 

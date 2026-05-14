@@ -7,6 +7,7 @@ import com.example.library.management.dto.UserResponse;
 import com.example.library.management.dto.login.LoginResponse;
 import com.example.library.management.entity.Admin;
 import com.example.library.management.entity.User;
+import com.example.library.management.exception.ConflictException;
 import com.example.library.management.repository.AdminRepository;
 import com.example.library.management.repository.UserRepository;
 import com.example.library.management.security.JwtService;
@@ -35,7 +36,7 @@ public class AuthService
 
     public UserResponse registerUser(UserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists.");
+            throw new ConflictException("Email already exists.");
         }
 
         User savedUser = userRepository.save(request.toEntity());
@@ -59,7 +60,7 @@ public class AuthService
 
     public AdminResponse registerAdmin(AdminRequest request) {
         if (adminRepository.existsByEmail(request.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists.");
+            throw new ConflictException("Email already exists.");
         }
 
         Admin savedAdmin = adminRepository.save(request.toEntity());
