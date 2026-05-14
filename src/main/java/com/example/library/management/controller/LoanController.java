@@ -5,7 +5,11 @@ import com.example.library.management.dto.LoanResponse;
 import com.example.library.management.service.LoanService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -33,10 +37,8 @@ public class LoanController
         return loanService.createLoan(request);
     }
 
-    @PostMapping("/loans/return")
-    public void returnLoan(@RequestBody LoanRequest loanRequest) {
-        log.debug("Received return loan request for userId={} and bookId={}", loanRequest.userId(), loanRequest.bookId());
-
-        loanService.returnLoan(loanRequest.userId(), loanRequest.bookId());
+    @PostMapping("/loans/{loanId}/return")
+    public void returnLoan(@PathVariable Long loanId) {
+        loanService.returnLoan(loanId);
     }
 }

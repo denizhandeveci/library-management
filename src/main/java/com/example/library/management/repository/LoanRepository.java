@@ -10,7 +10,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LoanRepository extends JpaRepository<Loan,Long> {
+public interface LoanRepository extends JpaRepository<Loan, Long>
+{
+    @Query("""
+            SELECT l
+            FROM Loan l
+            WHERE l.id = :id
+                AND l.returnDate is NULL
+                AND l.deleted is NULL
+            """)
+    Optional<Loan> findOpenLoanById(@Param("id") Long id);
 
     @Query("""
             SELECT l

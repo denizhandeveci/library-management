@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -108,15 +107,15 @@ public class LoanService
     }
 
     @Transactional
-    public void returnLoan(Long userId, Long bookId) {
-        log.info("Returning loan for userId={} and bookId={}", userId, bookId);
+    public void returnLoan(Long loanId) {
+        log.info("Returning loan for loanId={}", loanId);
 
         // Finds the active loan. If the user loaned the same book before and returned it, we don't want it we want the active loan
-        Loan loan = loanRepository.findOpenLoanByUserIdAndBookId(userId, bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Open loan for userId=" + userId + " and bookId=" + bookId + " was not found."));
+        Loan loan = loanRepository.findOpenLoanById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Open loan for loanId= " + loanId + " was not found."));
 
         if (loan.isReturned()) {
-            throw new ConflictException("Book has already been returned.");
+            throw new ConflictException("Loan=" + loanId + " has already been returned.");
         }
 
         // Else I set necessary fields
@@ -129,15 +128,15 @@ public class LoanService
         log.info(
                 "Loan marked as returned with loanId={} for userId={} and bookId={}. Available copies now={}",
                 loan.id,
-                userId,
-                bookId,
+                loan.user.id,
+                loan.book.id,
                 bookEntity.numOfCopiesAvailable
         );
 
         // Here I write a query to find the oldest reservation
         // in other words, if multiple reservations are created by separate users for the same book
         // once the book is available again, the first user that reserved the book will be able to loan it.
-        Optional<Reservation> oldestReservation = findFirstReservation(bookId);
+        Optional<Reservation> oldestReservation = findFirstReservation(loan.book.id);
 
         // Here is a simple if statement where I check if someone is waiting for this book
         // if yes, then I grab that reservation
@@ -149,13 +148,13 @@ public class LoanService
             log.info(
                     "Found active reservationId={} for returned bookId={}. Creating loan for reservedUserId={}",
                     reservation.id,
-                    bookId,
+                    loan.book.id,
                     reservedUserId
             );
 
             // here I call the createLoan function I defined previously to create a loan
             LoanRequest dto = new LoanRequest(
-                    bookId,
+                    loan.book.id,
                     reservedUserId
             );
 
@@ -167,10 +166,10 @@ public class LoanService
                     "ReservationId={} fulfilled and soft deleted for reservedUserId={} and bookId={}",
                     reservation.id,
                     reservedUserId,
-                    bookId
+                    loan.book.id
             );
         } else {
-            log.debug("No active reservation found for returned bookId={}", bookId);
+            log.debug("No active reservation found for returned bookId={}", loan.book.id);
         }
 
         loanRepository.save(loan);

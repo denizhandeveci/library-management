@@ -72,7 +72,8 @@ public class ReservationService
             throw ResourceNotFoundException.forId("Reservation", reservationId);
         }
 
-        reservationRepository.deleteById(reservationId);
+        var reservation = reservationRepository.findById(reservationId).orElseThrow();
+        reservation.softDelete();
 
         log.info("Reservation deleted successfully with reservationId={}", reservationId);
     }
