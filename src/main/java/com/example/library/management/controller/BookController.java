@@ -91,12 +91,12 @@ public class BookController
     }
 
     @PostMapping("/books/reset")
-    public ResetLibraryResponse deleteAllBooksAndResetAutoIncrement() {
+    public ResetLibraryResponse resetLibrary() {
         accessEnforcer.requireAdmin();
 
         log.warn("Received reset library request");
 
-        bookService.deleteAllBooksAndResetAutoIncrement();
+        bookService.resetLibrary();
 
         return new ResetLibraryResponse("All the data in library is deleted and reset");
     }

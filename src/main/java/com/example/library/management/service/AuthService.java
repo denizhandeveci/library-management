@@ -4,7 +4,7 @@ import com.example.library.management.dto.AdminRequest;
 import com.example.library.management.dto.AdminResponse;
 import com.example.library.management.dto.UserRequest;
 import com.example.library.management.dto.UserResponse;
-import com.example.library.management.dto.login.LoginResponse;
+import com.example.library.management.dto.login.AuthResult;
 import com.example.library.management.entity.Admin;
 import com.example.library.management.entity.User;
 import com.example.library.management.exception.ConflictException;
@@ -44,7 +44,7 @@ public class AuthService
         return UserResponse.fromEntity(savedUser);
     }
 
-    public LoginResponse<UserResponse> loginUser(String email, String password) {
+    public AuthResult<UserResponse> loginUser(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(this::invalidCredentials);
 
@@ -55,7 +55,7 @@ public class AuthService
         UserResponse response = UserResponse.fromEntity(user);
         String token = jwtService.createToken(user.id, user.email, UserRole.USER);
 
-        return LoginResponse.bearer(token, response);
+        return new AuthResult<>(token, response);
     }
 
     public AdminResponse registerAdmin(AdminRequest request) {
@@ -68,7 +68,7 @@ public class AuthService
         return AdminResponse.fromEntity(savedAdmin);
     }
 
-    public LoginResponse<AdminResponse> loginAdmin(String email, String password) {
+    public AuthResult<AdminResponse> loginAdmin(String email, String password) {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(this::invalidCredentials);
 
@@ -79,7 +79,7 @@ public class AuthService
         AdminResponse response = AdminResponse.fromEntity(admin);
         String token = jwtService.createToken(admin.id, admin.email, UserRole.ADMIN);
 
-        return LoginResponse.bearer(token, response);
+        return new AuthResult<>(token, response);
     }
 
     private ResponseStatusException invalidCredentials() {

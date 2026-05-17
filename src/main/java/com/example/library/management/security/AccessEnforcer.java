@@ -27,7 +27,7 @@ public class AccessEnforcer
         }
     }
 
-    private AuthenticatedUser getCurrentUser() {
+    public AuthenticatedUser getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {

@@ -9,6 +9,9 @@ import com.example.library.management.entity.Book;
 import com.example.library.management.exception.BadRequestException;
 import com.example.library.management.exception.ResourceNotFoundException;
 import com.example.library.management.repository.BookRepository;
+import com.example.library.management.repository.LoanRepository;
+import com.example.library.management.repository.ReservationRepository;
+import com.example.library.management.repository.ReviewRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +33,21 @@ public class BookService
     private static final Logger log = LoggerFactory.getLogger(BookService.class);
 
     private final BookRepository bookRepository;
+    private final LoanRepository loanRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReservationRepository reservationRepository;
 
-    public BookService(BookRepository bookRepository) {
+    public BookService(
+            BookRepository bookRepository,
+            LoanRepository loanRepository,
+            ReviewRepository reviewRepository,
+            ReservationRepository reservationRepository
+    )
+    {
         this.bookRepository = bookRepository;
+        this.loanRepository = loanRepository;
+        this.reviewRepository = reviewRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     public List<BookResponse> getBooks(String title, BookSortField sortBy, Sort.Direction direction) {
@@ -219,8 +234,17 @@ public class BookService
     }
 
     @Transactional
-    public void deleteAllBooksAndResetAutoIncrement() {
-        log.warn("Deleting all books and resetting auto increment");
+    public void resetLibrary() {
+        log.warn("Deleting all loans, reservations, reviews, and the books, also resetting their auto increments");
+
+        loanRepository.deleteAll();
+        loanRepository.resetAutoIncrement();
+
+        reservationRepository.deleteAll();
+        reservationRepository.resetAutoIncrement();
+
+        reviewRepository.deleteAll();
+        reviewRepository.resetAutoIncrement();
 
         bookRepository.deleteAll();
         bookRepository.resetAutoIncrement();
