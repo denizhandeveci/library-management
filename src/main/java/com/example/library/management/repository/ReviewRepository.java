@@ -11,12 +11,11 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long>
 {
-    List<Review> findByBookId(Long bookId);
-
     @Modifying
     @Query(value = "ALTER TABLE reviews AUTO_INCREMENT = 1", nativeQuery = true)
     void resetAutoIncrement();
 
+    List<Review> findByBookId(Long bookId);
 
     @Query("SELECT r FROM Review r WHERE r.user.id = :userId AND r.deleted is NULL")
     List<Review> findByUserId(Long userId);

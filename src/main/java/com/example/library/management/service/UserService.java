@@ -1,17 +1,15 @@
 package com.example.library.management.service;
 
-import com.example.library.management.dto.UserRequest;
 import com.example.library.management.dto.UserResponse;
 import com.example.library.management.entity.BaseEntity;
 import com.example.library.management.entity.User;
+import com.example.library.management.exception.ResourceNotFoundException;
 import com.example.library.management.repository.ReviewRepository;
 import com.example.library.management.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,19 +32,15 @@ public class UserService
         this.reviewRepository = reviewRepository;
     }
 
-    public UserResponse createUser(UserRequest userRequest) {
-        log.info("Creating user with email={}", userRequest.email());
+    public List<UserResponse> getAllUsers() {
+        List<UserResponse> users = userRepository.findAll()
+                .stream()
+                .map(UserResponse::fromEntity)
+                .toList();
 
-        if (userRepository.existsByEmail(userRequest.email())) {
-            log.warn("User creation rejected because email={} already exists", userRequest.email());
+        log.debug("Found {} users", users.size());
 
-            throw new RuntimeException("This email address has already been used. Please use another email address.");
-        }
-        User savedUser = userRepository.save(userRequest.toEntity());
-
-        log.info("User created successfully with userId={} and email={}", savedUser.id, savedUser.email);
-
-        return UserResponse.fromEntity(savedUser);
+        return users;
     }
 
     @Transactional
@@ -56,7 +50,7 @@ public class UserService
         User userEntity = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("User deletion failed because userId={} was not found", userId);
-                    return new RuntimeException("User not found");
+                    return ResourceNotFoundException.forId("User", userId);
                 });
 
         userEntity.softDelete();
@@ -69,32 +63,5 @@ public class UserService
                 userId,
                 reviews.size()
         );
-    }
-
-    public ResponseEntity<UserResponse> getUser(String email, String password) {
-        log.info("User login attempt for email={}", email);
-
-        User user = userRepository.findByEmailAndPassword(email, password).orElse(null);
-
-        if (user != null) {
-            log.info("User login successful for userId={} and email={}", user.id, email);
-
-            return ResponseEntity.ok(UserResponse.fromEntity(user));
-        }
-
-        log.warn("User login failed for email={}", email);
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
-    public List<UserResponse> getAllUsers() {
-        List<UserResponse> users = userRepository.findAll()
-                .stream()
-                .map(UserResponse::fromEntity)
-                .toList();
-
-        log.debug("Found {} users", users.size());
-
-        return users;
     }
 }

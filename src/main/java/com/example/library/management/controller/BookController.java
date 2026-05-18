@@ -4,6 +4,7 @@ import com.example.library.management.dto.book.BookDetailsResponse;
 import com.example.library.management.dto.book.BookRequest;
 import com.example.library.management.dto.book.BookResponse;
 import com.example.library.management.dto.book.BookSortField;
+import com.example.library.management.security.AccessEnforcer;
 import com.example.library.management.service.BookService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -28,9 +29,11 @@ public class BookController
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
 
     private final BookService bookService;
+    private final AccessEnforcer accessEnforcer;
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, AccessEnforcer accessEnforcer) {
         this.bookService = bookService;
+        this.accessEnforcer = accessEnforcer;
     }
 
     @GetMapping("/books")
@@ -47,13 +50,13 @@ public class BookController
 
     @GetMapping("/books/{bookId}")
     public BookDetailsResponse getBookDetails(@PathVariable Long bookId) {
-        log.debug("Received get book details request for bookId={}", bookId);
-
         return bookService.getBookDetails(bookId);
     }
 
     @PostMapping("/books")
     public ResponseEntity<BookResponse> createBook(@RequestBody @Valid BookRequest bookRequest) {
+        accessEnforcer.requireAdmin();
+
         log.debug("Received create book request for title={} and isbn={}", bookRequest.title(), bookRequest.isbn());
 
         BookResponse saved = bookService.createBook(bookRequest);
@@ -69,6 +72,8 @@ public class BookController
             @RequestBody @Valid BookRequest bookRequest
     )
     {
+        accessEnforcer.requireAdmin();
+
         log.debug("Received update book request for bookId={}", bookId);
 
         return bookService.updateBook(bookId, bookRequest);
@@ -76,6 +81,8 @@ public class BookController
 
     @DeleteMapping("/books/{bookId}")
     public ResponseEntity<Void> deleteBookById(@PathVariable Long bookId) {
+        accessEnforcer.requireAdmin();
+
         log.debug("Received delete book request for bookId={}", bookId);
 
         bookService.softDeleteBook(bookId);
@@ -84,10 +91,12 @@ public class BookController
     }
 
     @PostMapping("/books/reset")
-    public ResetLibraryResponse deleteAllBooksAndResetAutoIncrement() {
+    public ResetLibraryResponse resetLibrary() {
+        accessEnforcer.requireAdmin();
+
         log.warn("Received reset library request");
 
-        bookService.deleteAllBooksAndResetAutoIncrement();
+        bookService.resetLibrary();
 
         return new ResetLibraryResponse("All the data in library is deleted and reset");
     }

@@ -6,16 +6,18 @@ import com.example.library.management.dto.book.BookRequest;
 import com.example.library.management.dto.book.BookResponse;
 import com.example.library.management.dto.book.BookSortField;
 import com.example.library.management.entity.Book;
+import com.example.library.management.exception.BadRequestException;
+import com.example.library.management.exception.ResourceNotFoundException;
 import com.example.library.management.repository.BookRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.library.management.repository.LoanRepository;
+import com.example.library.management.repository.ReservationRepository;
+import com.example.library.management.repository.ReviewRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,9 +33,21 @@ public class BookService
     private static final Logger log = LoggerFactory.getLogger(BookService.class);
 
     private final BookRepository bookRepository;
+    private final LoanRepository loanRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReservationRepository reservationRepository;
 
-    public BookService(BookRepository bookRepository) {
+    public BookService(
+            BookRepository bookRepository,
+            LoanRepository loanRepository,
+            ReviewRepository reviewRepository,
+            ReservationRepository reservationRepository
+    )
+    {
         this.bookRepository = bookRepository;
+        this.loanRepository = loanRepository;
+        this.reviewRepository = reviewRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     public List<BookResponse> getBooks(String title, BookSortField sortBy, Sort.Direction direction) {
@@ -57,10 +71,7 @@ public class BookService
 
     public BookDetailsResponse getBookDetails(Long bookId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> {
-                    log.warn("Book details lookup failed because bookId={} was not found", bookId);
-                    return new EntityNotFoundException("Book not found with ID: " + bookId);
-                });
+                .orElseThrow(() -> ResourceNotFoundException.forId("Book", bookId));
 
         List<BookRecommendation> recommendationsByGenre = bookRepository.findByGenre(book.genre)
                 .stream()
@@ -180,27 +191,13 @@ public class BookService
         log.info("Updating book with bookId={}", id);
 
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Book update failed because bookId={} was not found", id);
-
-                    return new EntityNotFoundException("Book not found with ID: " + id);
-                });
+                .orElseThrow(() -> ResourceNotFoundException.forId("Book", id));
 
         int loanedCopies = book.numOfTotalCopies - book.numOfCopiesAvailable;
         int newTotalCopies = bookRequest.numOfTotalCopies();
 
         if (newTotalCopies < loanedCopies) {
-            log.warn(
-                    "Book update rejected for bookId={} because newTotalCopies={} is lower than loanedCopies={}",
-                    id,
-                    newTotalCopies,
-                    loanedCopies
-            );
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "The total number of copies cannot be lower than the number of currently loaned copies."
-            );
+            throw new BadRequestException("The total number of copies cannot be lower than the number of currently loaned copies.");
         }
 
         book.title = bookRequest.title();
@@ -230,18 +227,24 @@ public class BookService
         log.info("Soft deleting book with bookId={}", id);
 
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Book deletion failed because bookId={} was not found", id);
-                    return new EntityNotFoundException("Book not found with id: " + id);
-                });
+                .orElseThrow(() -> ResourceNotFoundException.forId("Book", id));
 
         book.softDelete();
         log.info("Book soft deleted successfully with bookId={}", id);
     }
 
     @Transactional
-    public void deleteAllBooksAndResetAutoIncrement() {
-        log.warn("Deleting all books and resetting auto increment");
+    public void resetLibrary() {
+        log.warn("Deleting all loans, reservations, reviews, and the books, also resetting their auto increments");
+
+        loanRepository.deleteAll();
+        loanRepository.resetAutoIncrement();
+
+        reservationRepository.deleteAll();
+        reservationRepository.resetAutoIncrement();
+
+        reviewRepository.deleteAll();
+        reviewRepository.resetAutoIncrement();
 
         bookRepository.deleteAll();
         bookRepository.resetAutoIncrement();

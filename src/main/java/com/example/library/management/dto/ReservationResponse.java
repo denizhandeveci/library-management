@@ -6,34 +6,45 @@ import java.time.LocalDate;
 
 public record ReservationResponse(
         Long id,
-        Long bookId,
+        LocalDate reservationDate,
 
-        String bookTitle,
-        String author,
-        String genre,
-        String isbn,
-
-        Long userId,
-        String userName,
-        LocalDate reservationDate
+        ReservationBookDto book,
+        ReservationUserDto user
 )
 {
+    public record ReservationBookDto(
+            Long bookId,
+            String title,
+            String author,
+            String genre,
+            String isbn
+    ) {}
+
+    public record ReservationUserDto(
+            Long userId,
+            String userName
+    ) {}
+
     public static ReservationResponse fromEntity(Reservation reservation) {
         var book = reservation.book;
         var user = reservation.user;
 
         return new ReservationResponse(
                 reservation.id,
-                book.id,
-                book.title,
-                book.author,
-                book.genre,
-                book.isbn,
+                reservation.reservationDate,
 
-                user.id,
-                user.name,
+                new ReservationBookDto(
+                        book.id,
+                        book.title,
+                        book.author,
+                        book.genre,
+                        book.isbn
+                ),
 
-                reservation.reservationDate
+                new ReservationUserDto(
+                        user.id,
+                        user.name
+                )
         );
     }
 }

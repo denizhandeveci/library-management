@@ -30,4 +30,14 @@ public interface UserRepository extends JpaRepository<User, Long>
             @Param("email") String email,
             @Param("password") String password
     );
+
+    @Query("""
+            SELECT u
+            FROM User u
+            WHERE u.email = :email
+            AND u.deleted IS NULL
+            """)
+    Optional<User> findByEmail(
+            @Param("email") String email
+    );
 }

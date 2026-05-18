@@ -2,6 +2,7 @@ package com.example.library.management.repository;
 
 import com.example.library.management.entity.Loan;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -10,7 +11,20 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LoanRepository extends JpaRepository<Loan,Long> {
+public interface LoanRepository extends JpaRepository<Loan, Long>
+{
+    @Modifying
+    @Query(value = "ALTER TABLE loans AUTO_INCREMENT = 1", nativeQuery = true)
+    void resetAutoIncrement();
+
+    @Query("""
+            SELECT l
+            FROM Loan l
+            WHERE l.id = :id
+                AND l.returnDate is NULL
+                AND l.deleted is NULL
+            """)
+    Optional<Loan> findOpenLoanById(@Param("id") Long id);
 
     @Query("""
             SELECT l
