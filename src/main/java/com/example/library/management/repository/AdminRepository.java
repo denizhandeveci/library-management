@@ -20,18 +20,6 @@ public interface AdminRepository extends JpaRepository<Admin, Long>
     boolean existsByEmail(@Param("email") String email);
 
     @Query("""
-            SELECT u
-            FROM User u
-            WHERE u.email = :email
-            AND u.password = :password
-            AND u.deleted IS NULL
-            """)
-    Optional<Admin> findByEmailAndPassword(
-            @Param("email") String email,
-            @Param("password") String password
-    );
-
-    @Query("""
             SELECT a
             FROM Admin a
             WHERE a.email = :email

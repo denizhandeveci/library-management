@@ -24,7 +24,8 @@ public record AdminRequest(
         admin.email = email();
         admin.phoneNumber = phoneNumber();
         admin.address = address();
-        admin.password = password();
+
+        // password is hashed before save
 
         return admin;
     }
