@@ -25,8 +25,8 @@ public class User extends BaseEntity
     @Column(name = "address")
     public String address;
 
-    @Column(nullable = false)
-    public String password;
+    @Column(name = "password_hash", nullable = false)
+    public String passwordHash;
 
     public User() {}
 }

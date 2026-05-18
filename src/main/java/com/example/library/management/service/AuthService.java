@@ -13,6 +13,7 @@ import com.example.library.management.repository.UserRepository;
 import com.example.library.management.security.JwtService;
 import com.example.library.management.security.UserRole;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,16 +23,19 @@ public class AuthService
     private final UserRepository userRepository;
     private final AdminRepository adminRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
             UserRepository userRepository,
             AdminRepository adminRepository,
-            JwtService jwtService
+            JwtService jwtService,
+            PasswordEncoder passwordEncoder
     )
     {
         this.userRepository = userRepository;
         this.adminRepository = adminRepository;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponse registerUser(UserRequest request) {
@@ -39,7 +43,10 @@ public class AuthService
             throw new ConflictException("Email already exists.");
         }
 
-        User savedUser = userRepository.save(request.toEntity());
+        User user = request.toEntity();
+        user.passwordHash = passwordEncoder.encode(request.password());
+
+        User savedUser = userRepository.save(user);
 
         return UserResponse.fromEntity(savedUser);
     }
@@ -48,7 +55,7 @@ public class AuthService
         User user = userRepository.findByEmail(email)
                 .orElseThrow(this::invalidCredentials);
 
-        if (!user.password.equals(password)) {
+        if (!passwordEncoder.matches(password, user.passwordHash)) {
             throw invalidCredentials();
         }
 
@@ -63,7 +70,10 @@ public class AuthService
             throw new ConflictException("Email already exists.");
         }
 
-        Admin savedAdmin = adminRepository.save(request.toEntity());
+        Admin admin = request.toEntity();
+        admin.passwordHash = passwordEncoder.encode(request.password());
+
+        Admin savedAdmin = adminRepository.save(admin);
 
         return AdminResponse.fromEntity(savedAdmin);
     }
@@ -72,7 +82,7 @@ public class AuthService
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(this::invalidCredentials);
 
-        if (!admin.password.equals(password)) {
+        if (!passwordEncoder.matches(password, admin.passwordHash)) {
             throw invalidCredentials();
         }
 

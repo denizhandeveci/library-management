@@ -24,7 +24,8 @@ public record UserRequest(
         user.email = email();
         user.phoneNumber = phoneNumber();
         user.address = address();
-        user.password = password();
+
+        // password is hashed before save
 
         return user;
     }

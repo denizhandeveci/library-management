@@ -12,6 +12,14 @@ cp .env.template .env
 
 Then edit `.env` if needed.
 
+For local MySQL 8 containers, the JDBC URL in .env.template includes:
+            
+    allowPublicKeyRetrieval=true&useSSL=false
+
+This is intended for local development only. It allows local JDBC clients, including the Flyway container, to authenticate against the MySQL container without configuring SSL certificates.
+
+---
+
 For local JWT secrets, you can generate a value with:
 
 ```bash
@@ -83,3 +91,41 @@ podman exec -i deveci-mysql mysql -u"$DB_USERNAME" -p"$DB_PASSWORD" library_mana
 ```
 
 The seed script is only for local development. It is not part of the Flyway migrations.
+
+### Run Flyway migrations manually
+
+Flyway runs automatically when the backend starts.
+
+If you want to apply migrations manually without starting the Spring Boot app, run this from the project root:
+
+```bash
+source .env
+
+podman run --rm \
+    --network host \
+    -v "$PWD/src/main/resources/db/migration:/flyway/migrations:ro" \
+    docker.io/flyway/flyway:latest \
+    -locations=filesystem:/flyway/migrations \
+    -url="$DB_URL" \
+    -user="$DB_USERNAME" \
+    -password="$DB_PASSWORD" \
+    migrate
+```
+
+To inspect the current migration status:
+
+```bash
+source .env
+
+podman run --rm \
+    --network host \
+    -v "$PWD/src/main/resources/db/migration:/flyway/migrations:ro" \
+    docker.io/flyway/flyway:latest \
+    -locations=filesystem:/flyway/migrations \
+    -url="$DB_URL" \
+    -user="$DB_USERNAME" \
+    -password="$DB_PASSWORD" \
+    info
+```
+
+Note: `--network host` is intended for local Linux development, so the Flyway container can reach MySQL on `localhost:3306`.

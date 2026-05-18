@@ -1,6 +1,6 @@
 ## Backend
 
-### 1. Create local environment file
+### 1. Create a local environment file
 
 Create your local `.env` file from the template:
 

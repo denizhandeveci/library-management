@@ -26,8 +26,8 @@ public class Admin extends BaseEntity
     @Column(name = "address")
     public String address;
 
-    @Column(name = "password", nullable = false)
-    public String password;
+    @Column(name = "password_hash", nullable = false)
+    public String passwordHash;
 
     public Admin() {}
 }
