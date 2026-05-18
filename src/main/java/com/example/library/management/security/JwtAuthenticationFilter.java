@@ -1,9 +1,5 @@
-package com.example.library.management.config;
+package com.example.library.management.security;
 
-import com.example.library.management.security.AuthenticatedUser;
-import com.example.library.management.security.JwtCookieService;
-import com.example.library.management.security.JwtService;
-import com.example.library.management.security.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

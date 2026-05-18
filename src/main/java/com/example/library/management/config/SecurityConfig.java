@@ -1,5 +1,6 @@
 package com.example.library.management.config;
 
+import com.example.library.management.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,6 +33,8 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.POST, "/auth/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/admins/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                         // Temporary bootstrap endpoint. // TODO, yb
                         // Later: seed first admin via Flyway, then make this authenticated/admin-only.

@@ -1,4 +1,4 @@
-package com.example.library.management.config;
+package com.example.library.management.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
